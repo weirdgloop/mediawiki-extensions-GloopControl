@@ -114,10 +114,10 @@ class SearchUser extends GloopControlSubpage {
 			$repo = MediaWikiServices::getInstance()->getService( 'OATHUserRepository' );
 			$oathUser = $repo->findByUser( $user );
 			$module = $oathUser->getModule();
-			if ( ( $module instanceof IModule ) || $module->isEnabled( $oathUser ) === true ) {
-				$templateData['2fa'] = 'Yes';
-			} else {
+			if ( !( $module instanceof IModule ) || $module->isEnabled( $oathUser ) === false ) {
 				$templateData['2fa'] = 'No';
+			} else {
+				$templateData['2fa'] = 'Yes';
 			}
 		}
 
