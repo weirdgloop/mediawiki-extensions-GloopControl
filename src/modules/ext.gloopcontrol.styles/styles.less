@@ -1,0 +1,58 @@
+@import 'mediawiki.skin.variables.less';
+
+.ext-gloopcontrol {
+	&-main {
+		max-width: 1000px;
+		margin: auto;
+
+		ul {
+			font-size: .9em;
+		}
+	}
+
+	&-main-nav {
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+		gap: .5em;
+	}
+
+	&-script-output {
+		background: black;
+		color: white;
+		font-size: .9em;
+	}
+
+	&-user-details {
+		padding: 1em;
+		border: 1px solid #c7c7c7;
+
+		.user-info {
+			display: flex;
+			flex-wrap: wrap;
+			gap: 1em;
+
+			ul {
+				font-size: .9em;
+			}
+		}
+
+		h1, h2, h3, h4 {
+			margin: 0;
+			padding: 0;
+		}
+	}
+
+	&-css-icon {
+		&--user {
+			.cdx-mixin-css-icon( @cdx-icon-user-avatar );
+		}
+
+		&--cog {
+			.cdx-mixin-css-icon( @cdx-icon-settings );
+		}
+
+		&--book {
+			.cdx-mixin-css-icon( @cdx-icon-book )
+		}
+	}
+}

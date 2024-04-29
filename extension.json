@@ -1,0 +1,86 @@
+{
+	"name": "GloopControl",
+	"version": "0.1",
+	"author": [
+		"[https://github.com/jayktaylor Jayden Bailey]",
+		"..."
+	],
+	"url": "https://weirdgloop.org",
+	"descriptionmsg": "gloopcontrol-desc",
+	"license-name": "GPL-3.0-or-later",
+	"type": "other",
+	"requires": {
+		"MediaWiki": ">= 1.41.0"
+	},
+	"AutoloadNamespaces": {
+		"MediaWiki\\Extension\\GloopControl\\": "src/"
+	},
+	"MessagesDirs": {
+		"GloopControl": [
+			"i18n"
+		]
+	},
+	"SpecialPages": {
+		"GloopControl": "MediaWiki\\Extension\\GloopControl\\SpecialGloopControl"
+	},
+	"config_prefix": "wgGloopControl",
+	"config": {
+		"RestrictedConfig": {
+			"value": [
+				"wgSecretKey",
+				"wgSessionSecret",
+				"wgShellboxSecretKey",
+				"wgGloopTweaksCFToken",
+				"wgDBadminuser",
+				"wgDBadminpassword",
+				"wgDBuser",
+				"wgDBpassword",
+				"wgDBserver",
+				"wgReCaptchaSecretKey",
+				"wgReCaptchaSiteKey",
+				"wglSMTPpassword",
+				"wgDiscordWebhookURLs",
+				"wgOAuth2PrivateKey",
+				"wgOAuth2PublicKey",
+				"wgMUASecret",
+				"wgDiscordWebhookURLs",
+				"wgHKDFSecret",
+				"wgUpgradeKey",
+				"wgUser",
+				"wgOut"
+			]
+		}
+	},
+	"ResourceFileModulePaths": {
+		"localBasePath": "src/modules",
+		"remoteExtPath": "GloopControl/src/modules"
+	},
+	"ResourceModules": {
+		"ext.gloopcontrol.styles": {
+			"class": "MediaWiki\\ResourceLoader\\CodexModule",
+			"styles": "ext.gloopcontrol.styles/styles.less"
+		}
+	},
+	"ExtensionMessagesFiles": {
+		"GloopControlAlias": "GloopControl.i18n.alias.php"
+	},
+	"AvailableRights": [
+		"gloopcontrol"
+	],
+	"LogTypes": [
+		"gloopcontrol"
+	],
+	"LogNames": {
+		"gloopcontrol": "gloopcontrol-log-name"
+	},
+	"LogRestrictions": {
+		"gloopcontrol": "gloopcontrol"
+	},
+	"LogHeaders": {
+		"gloopcontrol": "gloopcontrol-log-header"
+	},
+	"LogActionsHandlers": {
+		"gloopcontrol/*": "LogFormatter"
+	},
+	"manifest_version": 2
+}

@@ -1,0 +1,58 @@
+<div class="ext-gloopcontrol-user-details">
+	<h3>{{ name }} (<code>{{ id }}</code>)</h3>
+	<div class="user-info">
+		<ul>
+			<li><strong>Registered at:</strong> {{ registered }}</li>
+			<li><strong>Email:</strong> {{ email }} ({{#email_authed}}confirmed at {{ email_authed }}{{/email_authed}}{{^email_authed}}<span style="color: red;">unconfirmed</span>{{/email_authed}})</li>
+			<li><strong>Real name:</strong> {{ real }}</li>
+		</ul>
+		<ul>
+			<li><strong>Is blocked here:</strong> {{#block_timestamp}}<span style="color: red;">Yes</span>, since {{block_timestamp}}. Block added by {{block_author}}. Expires at {{block_expiry}}.{{/block_timestamp}}{{^block_timestamp}}No{{/block_timestamp}}</li>
+			<li><strong>Edits:</strong> {{ edits }}</li>
+			<li><strong>Groups:</strong> {{ groups }}</li>
+		</ul>
+		<ul>
+			<li><strong>Last touched:</strong> {{ touched }}</li>
+			<li><strong>Last edit:</strong> {{ last_edit }}</li>
+			<li><strong>IP address:</strong> {{#checkuser}}<a href="{{ checkuser }}">CheckUser</a>{{/checkuser}}{{^checkuser}}Unavailable{{/checkuser}}</li>
+		</ul>
+		<ul>
+			<li>{{#migration}}<span style="color: red;">Needs external wiki migration</span>{{/migration}}{{^migration}}No external migration needed{{/migration}}</li>
+			<li><strong>2FA enabled:</strong> {{ 2fa }}{{^2fa}}Unavailable{{/2fa}}</li>
+		</ul>
+	</div>
+	<div style="margin-top: 1em;">
+		{{#rename}}
+		<a href="{{ rename }}">
+			<button class="cdx-button">
+				Rename
+			</button>
+		</a>
+		{{/rename}}
+		<a href="{{ change_email_url }}">
+			<button class="cdx-button">
+				Change email
+			</button>
+		</a>
+		<a href="{{ reassign_edits_url }}">
+			<button class="cdx-button">
+				Reassign edits
+			</button>
+		</a>
+		<a href="{{ reset_password_url }}">
+			<button class="cdx-button cdx-button--action-destructive">
+				Reset password
+			</button>
+		</a>
+	</div>
+<!--	<details class="cdx-accordion">-->
+<!--		<summary>-->
+<!--			<h5 class="cdx-accordion__header">-->
+<!--				Preferences-->
+<!--			</h5>-->
+<!--		</summary>-->
+<!--		<div class="cdx-accordion__content">-->
+<!--			<pre>{{ opts }}</pre>-->
+<!--		</div>-->
+<!--	</details>-->
+</div>

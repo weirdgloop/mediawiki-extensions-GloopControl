@@ -1,0 +1,33 @@
+{
+	"@metadata": {
+		"authors": [
+			"Jayden Bailey"
+		]
+	},
+	"gloopcontrol": "GloopControl",
+	"gloopcontrol-desc": "Provides utilities for staff to manage the network",
+	"action-gloopcontrol": "manage network-wide configuration",
+	"gloopcontrol-log-name": "Weird Gloop network log",
+	"gloopcontrol-log-header": "This is a log of actions taken by Weird Gloop staff members using [[Special:GloopControl]] on this wiki.",
+	"logentry-gloopcontrol-task": "$1 ran task \"$4\" on target $3",
+	"gloopcontrol-config-intro": "This page outputs a serialized JSON list of global variables on this wiki that begin with <code>$wg</code> or <code>$wmg</code>. Some sensitive configuration variables are hidden from this list.",
+	"gloopcontrol-user-username": "Username",
+	"gloopcontrol-tasks-reassign-target": "Username to re-assign edits to",
+	"gloopcontrol-user-not-found": "'''$1''' was not found in the database.",
+	"gloopcontrol-tasks-intro": "This page allows you to emulate running specific maintenance scripts without having direct server access by re-implementing their logic. Actions taken on this page [[Special:Log/gloopcontrol|are logged]]. If you require something that is not listed here, please contact a sysadmin.",
+	"gloopcontrol-tasks-task": "Task to run",
+	"gloopcontrol-tasks-username": "Username",
+	"gloopcontrol-tasks-email": "New email address",
+	"gloopcontrol-tasks-password": "New password",
+	"gloopcontrol-tasks-comment": "Comment",
+	"gloopcontrol-tasks-confirm": "Tick to confirm that you intend to perform this action. Please double-check your inputs!",
+	"gloopcontrol-tasks-error-user-not-found": "'''$1''' was not found in the database.",
+	"gloopcontrol-tasks-error-password-invalid": "The password you entered is not a valid password on this wiki.",
+	"gloopcontrol-tasks-error-user-anonymize-failed": "Could not anonymize '''$1'''. An error occurred.",
+	"gloopcontrol-tasks-error-user-self": "You cannot perform an action on yourself using this form. Please contact a sysadmin.",
+	"gloopcontrol-tasks-success-email": "Changed email for '''$1''' to '''$2'''",
+	"gloopcontrol-tasks-success-password": "Changed password for '''$1'''",
+	"gloopcontrol-tasks-success-reassign": "Re-assigned edits from '''$1''' to '''$2''' on this wiki",
+	"gloopcontrol-tasks-success-anonymize": "Anonymized user '''$1'''",
+	"gloopcontrol-tasks-warning-email-already-set": "'''$1''' already has that email address."
+}

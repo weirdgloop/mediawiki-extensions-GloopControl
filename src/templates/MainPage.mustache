@@ -1,0 +1,41 @@
+<div class="ext-gloopcontrol-main">
+	<div class="ext-gloopcontrol-main-nav">
+		<a class="cdx-card cdx-card--is-link" href="{{ search_user_url }}">
+			<span class="cdx-card__icon ext-gloopcontrol-css-icon--user"></span>
+			<span class="cdx-card__text">
+					<span class="cdx-card__text__title">Get user information</span>
+					<span class="cdx-card__text__description">Use this tool to learn more about a particular user, such as their email address.</span>
+				  </span>
+		</a>
+
+		<a class="cdx-card cdx-card--is-link" href="{{ task_url }}">
+			<span class="cdx-card__icon ext-gloopcontrol-css-icon--cog"></span>
+			<span class="cdx-card__text">
+					<span class="cdx-card__text__title">Run task</span>
+					<span class="cdx-card__text__description">Emulates running various maintenance scripts for a wiki without requiring direct server or database access.</span>
+				  </span>
+		</a>
+
+		<a class="cdx-card cdx-card--is-link" href="{{ site_config_url }}">
+			<span class="cdx-card__icon ext-gloopcontrol-css-icon--book"></span>
+			<span class="cdx-card__text">
+					<span class="cdx-card__text__title">Site config</span>
+					<span class="cdx-card__text__description">View all defined configuration variables for this wiki.</span>
+				  </span>
+		</a>
+	</div>
+
+	<div style="display: flex; gap: 2em; margin-top: 1em;">
+		<div>
+			<h3>Wiki information</h3>
+			<ul>
+				<li><strong>Server:</strong> {{ server }}</li>
+				<li><strong>Database:</strong> {{ database }}</li>
+				<li><strong>Shared database:</strong> {{ shared_database }}</li>
+				<li><strong>Wiki:</strong> {{ wiki }}</li>
+				<li><strong>Host:</strong> {{ host }}</li>
+				<li><strong>PHP version:</strong> {{ php }}</li>
+			</ul>
+		</div>
+	</div>
+</div>
