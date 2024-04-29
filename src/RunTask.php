@@ -263,7 +263,7 @@ class RunTask extends GloopControlSubpage {
 
 		$rename = new RenameuserSQL(
 			$user->getName(),
-			$this->uf->newFromName( 'Anonymous ' . MediaWikiServices::getInstance()->getGlobalIdGenerator()->newUUIDv4() ),
+			$this->uf->newFromName( 'Anonymous ' . MediaWikiServices::getInstance()->getGlobalIdGenerator()->newUUIDv4() )->getName(),
 			$user->getId(),
 			$this->special->getUser(),
 			[ 'reason' => 'Anonymizing' ]
