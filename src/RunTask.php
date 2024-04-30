@@ -8,6 +8,7 @@ use ManualLogEntry;
 use MediaWiki\Html\Html;
 use MediaWiki\MediaWikiServices;
 use MediaWiki\RenameUser\RenameuserSQL;
+use MediaWiki\Session\SessionManager;
 use MediaWiki\Status\Status;
 use MediaWiki\User\User;
 use MediaWiki\User\UserFactory;
@@ -72,6 +73,11 @@ class RunTask extends GloopControlSubpage {
 				'label-message' => 'gloopcontrol-tasks-password',
 				'hide-if' => [ '!==', 'task', '1' ]
 			],
+			'invalidate' => [
+				'type' => 'check',
+				'label-message' => 'gloopcontrol-tasks-invalidate',
+				'hide-if' => [ '!==', 'task', '1' ]
+			],
 			// Deliberately not using 'type' => 'user' so that anonymous edits can be re-assigned
 			'reassign_username' => [
 				'type' => 'text',
@@ -132,7 +138,7 @@ class RunTask extends GloopControlSubpage {
 		if ( $task === '0' ) {
 			$res = $this->changeUserEmail( $user, $formData[ 'email' ] );
 		} else if ( $task === '1' ) {
-			$res = $this->changeUserPassword( $user, $formData[ 'password' ] );
+			$res = $this->changeUserPassword( $user, $formData[ 'password' ], $formData[ 'invalidate' ] );
 		} else if ( $task === '2' ) {
 			$res = $this->reassignEdits( $formData[ 'reassign_username' ], $formData[ 'reassign_target' ] );
 		} else if ( $task === '3' ) {
@@ -170,7 +176,7 @@ class RunTask extends GloopControlSubpage {
 		$out->addHTML( $html );
 	}
 
-	private function changeUserEmail( $user, $email ): Status {
+	private function changeUserEmail( User $user, string $email ): Status {
 		$status = new Status();
 		if ( $user->getEmail() === $email ) {
 			return $status->warning( 'gloopcontrol-tasks-warning-email-already-set', $user->getName() );
@@ -185,7 +191,7 @@ class RunTask extends GloopControlSubpage {
 		return $status;
 	}
 
-	private function changeUserPassword( $user, $password ): Status {
+	private function changeUserPassword( User $user, string $password, bool $invalidate = false ): Status {
 		$status = new Status();
 		if ( !$user->isValidPassword( $password ) ) {
 			return $status->fatal( 'gloopcontrol-tasks-error-password-invalid' );
@@ -196,6 +202,12 @@ class RunTask extends GloopControlSubpage {
 			'password' => $password,
 			'retype' => $password
 		] ));
+
+		// If requested, invalidate the user's sessions
+		if ( $invalidate ) {
+			SessionManager::singleton()->invalidateSessionsForUser( $user );
+		}
+
 		if ( $status->isGood() ) {
 			$status->setResult( true, $this->special->msg( 'gloopcontrol-tasks-success-password', $user->getName() ) );
 		}
@@ -218,7 +230,7 @@ class RunTask extends GloopControlSubpage {
 		return $user;
 	}
 
-	private function reassignEdits( $source, $target ): Status {
+	private function reassignEdits( string $source, string $target ): Status {
 		$status = new Status();
 		$services = MediaWikiServices::getInstance();
 

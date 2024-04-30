@@ -19,6 +19,7 @@
 	"gloopcontrol-tasks-username": "Username",
 	"gloopcontrol-tasks-email": "New email address",
 	"gloopcontrol-tasks-password": "New password",
+	"gloopcontrol-tasks-invalidate": "Also invalidate user's sessions (will log them out)",
 	"gloopcontrol-tasks-comment": "Comment",
 	"gloopcontrol-tasks-confirm": "Tick to confirm that you intend to perform this action. Please double-check your inputs!",
 	"gloopcontrol-tasks-error-user-not-found": "'''$1''' was not found in the database.",
