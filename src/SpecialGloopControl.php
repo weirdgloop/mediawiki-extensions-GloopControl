@@ -2,10 +2,15 @@
 
 namespace MediaWiki\Extension\GloopControl;
 
+use ExtensionRegistry;
+use MediaWiki\Extension\OATHAuth\IModule;
 use MediaWiki\Html\TemplateParser;
+use MediaWiki\MediaWikiServices;
 use MediaWiki\SpecialPage\SpecialPage;
 use MediaWiki\Title\Title;
 use MediaWiki\WikiMap\WikiMap;
+use Monolog\Handler\MissingExtensionException;
+use PermissionsError;
 
 class SpecialGloopControl extends SpecialPage {
 
@@ -27,8 +32,24 @@ class SpecialGloopControl extends SpecialPage {
 	}
 
 	function execute( $par ) {
+		global $wgGloopControlRequire2FA;
+
 		$this->setHeaders();
 		$this->checkPermissions();
+
+		if ( $wgGloopControlRequire2FA === true ) {
+			if ( !ExtensionRegistry::getInstance()->isLoaded( 'OATHAuth' ) ) {
+				throw new MissingExtensionException( 'The OATHAuth extension is not enabled, but $wglGloopControlRequire2FA is set to true.' );
+			}
+
+			$repo = MediaWikiServices::getInstance()->getService( 'OATHUserRepository' );
+			$oathUser = $repo->findByUser( $this->getUser() );
+			$module = $oathUser->getModule();
+			if ( !( $module instanceof IModule ) || $module->isEnabled( $oathUser ) === false ) {
+				// User does not have 2FA enabled, do not allow them to access this page.
+				throw new PermissionsError( null, [ 'gloopcontrol-error-2fa' ] );
+			}
+		}
 
 		$out = $this->getOutput();
 		$out->addModuleStyles( [ 'codex-styles', 'ext.gloopcontrol.styles' ] );

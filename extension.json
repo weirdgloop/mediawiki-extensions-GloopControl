@@ -25,6 +25,9 @@
 	},
 	"config_prefix": "wgGloopControl",
 	"config": {
+		"Require2FA": {
+			"value": true
+		},
 		"RestrictedConfig": {
 			"value": [
 				"wgSecretKey",

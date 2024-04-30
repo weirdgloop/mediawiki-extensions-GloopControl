@@ -30,5 +30,6 @@
 	"gloopcontrol-tasks-success-password": "Changed password for '''$1'''",
 	"gloopcontrol-tasks-success-reassign": "Re-assigned edits from '''$1''' to '''$2''' on this wiki",
 	"gloopcontrol-tasks-success-anonymize": "Anonymized user '''$1'''",
-	"gloopcontrol-tasks-warning-email-already-set": "'''$1''' already has that email address."
+	"gloopcontrol-tasks-warning-email-already-set": "'''$1''' already has that email address.",
+	"gloopcontrol-error-2fa": "You must [[Special:Manage_Two-factor_authentication|enable two-factor authentication]] to use this page."
 }
