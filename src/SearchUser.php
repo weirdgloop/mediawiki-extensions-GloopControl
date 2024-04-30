@@ -64,19 +64,22 @@ class SearchUser extends GloopControlSubpage {
 		}
 
 		$emailAuth = $user->getEmailAuthenticationTimestamp();
-		$lastEdit = MediaWikiServices::getInstance()->getUserEditTracker()->getLatestEditTimestamp( $user );;
+		$reg = $user->getRegistration();
+		$lastEdit = MediaWikiServices::getInstance()->getUserEditTracker()->getLatestEditTimestamp( $user );
+		$groups = MediaWikiServices::getInstance()->getUserGroupManager()->getUserGroups( $user );
+		$touched = $user->getTouched();
 
 		$templateData = [
 			'id' => $user->getId(),
 			'name' => $user->getName(),
-			'registered' => $this->lang->userTimeAndDate( $user->getRegistration(), $user ),
+			'registered' => $reg ? $this->lang->userTimeAndDate( $reg, $user ) : 'Unknown',
 			'email' => $user->getEmail(),
 			'real' => $user->getRealName(),
 			'email_authed' => $emailAuth ? $this->lang->userTimeAndDate( $emailAuth, $user ) : null,
 			'edits' => $user->getEditCount(),
-			'groups' => implode( ', ', MediaWikiServices::getInstance()->getUserGroupManager()->getUserGroups( $user ) ),
-			'touched' => $this->lang->userTimeAndDate( $user->getTouched(), $user ),
-			'last_edit' => $lastEdit ? $this->lang->userTimeAndDate( $lastEdit, $user ) : null,
+			'groups' => sizeof( $groups ) > 0 ? implode( ', ', $groups ) : 'None',
+			'touched' => $touched ? $this->lang->userTimeAndDate( $touched, $user ) : 'Unknown',
+			'last_edit' => $lastEdit ? $this->lang->userTimeAndDate( $lastEdit, $user ) : 'Unknown',
 			'rename' => Title::newFromText( 'Renameuser/' . $user->getName(), NS_SPECIAL )->getLinkURL(),
 			'change_email_url' => Title::newFromText( 'GloopControl/task', NS_SPECIAL )->getLinkURL( [
 				'wptask' => '0',
@@ -95,7 +98,7 @@ class SearchUser extends GloopControlSubpage {
 		// Get block information
 		$block = $user->getBlock();
 		if ( $block ) {
-			$templateData['block_timestamp'] = $block->getTimestamp();
+			$templateData['block_timestamp'] = $this->lang->userTimeAndDate( $block->getTimestamp(), $user );
 			$templateData['block_author'] = $block->getByName();
 			$templateData['block_expiry'] = $block->getExpiry();
 		}
@@ -125,13 +128,14 @@ class SearchUser extends GloopControlSubpage {
 		$dbr = MediaWikiServices::getInstance()->getDBLoadBalancer()->getConnection( DB_REPLICA );
 		$res = $dbr->newSelectQueryBuilder()
 			->select( [
-				'user_password IS NULL as needs_migration'
+				'user_password = "" as needs_migration'
 			] )
 			->from( 'user' )
 			->where( [
 				'user_id' => $user->getId()
 			] )
 			->fetchRow();
+
 		if ( $res ) {
 			if ( $this->er->isLoaded( 'MigrateUserAccount' ) && $res->needs_migration ) {
 				$templateData['migration'] = 'yes';
