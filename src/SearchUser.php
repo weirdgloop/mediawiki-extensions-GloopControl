@@ -31,7 +31,7 @@ class SearchUser extends GloopControlSubpage {
 	}
 
 	function execute() {
-		$this->special->getOutput()->setPageTitle('Get user information');
+		$this->special->getOutput()->setPageTitle( $this->special->getOutput()->msg( 'gloopcontrol-user' )->text() );
 		$this->displayForm();
 	}
 
@@ -43,9 +43,9 @@ class SearchUser extends GloopControlSubpage {
 				'required' => true,
 				'label-message' => 'gloopcontrol-user-type',
 				'options' => [
-					'Username' => 'username',
-					'ID' => 'id',
-					'Email address' => 'email',
+					$this->special->getOutput()->msg( 'gloopcontrol-user-username' )->text() => 'username',
+					$this->special->getOutput()->msg( 'gloopcontrol-user-id' )->text() => 'id',
+					$this->special->getOutput()->msg( 'gloopcontrol-user-email' )->text() => 'email',
 				]
 			],
 			'user' => [
@@ -140,41 +140,73 @@ class SearchUser extends GloopControlSubpage {
 		$emailAuth = $user->getEmailAuthenticationTimestamp();
 		$reg = $user->getRegistration();
 		$lastEdit = MediaWikiServices::getInstance()->getUserEditTracker()->getLatestEditTimestamp( $user );
-		$groups = MediaWikiServices::getInstance()->getUserGroupManager()->getUserGroups( $user );
+		$groups = [];
+		foreach ( MediaWikiServices::getInstance()->getUserGroupManager()->getUserGroups( $user ) as $group ) {
+			$groups[] = $out->msg( 'group-' . $group )->text();
+		}
 		$touched = $user->getTouched();
 
 		$templateData = [
-			'id' => $user->getId(),
 			'name' => $user->getName(),
-			'registered' => $reg ? $this->lang->userTimeAndDate( $reg, $user ) : 'Unknown',
+			'space' => $out->msg( 'gloopcontrol-textformat-space' )->text(),
+			'parentheses_start' => $out->msg( 'parentheses-start' )->text(),
+			'id' => $user->getId(),
+			'parentheses_end' => $out->msg( 'parentheses-end' )->text(),
+			'registered_label' => $out->msg( 'prefs-registration' )->text(),
+			'registered' => $reg ? $this->lang->userTimeAndDate( $reg, $user ) : $out->msg( 'gloopcontrol-user-unknown' )->text(),
+			'email_label' => $out->msg( 'youremail' )->text(),
 			'email' => $user->getEmail(),
-			'real' => $user->getRealName(),
 			'email_authed' => $emailAuth ? $this->lang->userTimeAndDate( $emailAuth, $user ) : null,
+			'email_confirmed' => $out->msg( 'gloopcontrol-user-email-confirmed' )->text(),
+			'email_unconfirmed' => $out->msg( 'gloopcontrol-user-email-unconfirmed' )->text(),
+			'real_label' => $out->msg( 'yourrealname' )->text(),
+			'real' => $user->getRealName(),
+			'block_label' => $out->msg( 'gloopcontrol-user-blocked' )->text(),
+			'yes' => $out->msg( 'confirmable-yes' )->text(),
+			'no' => $out->msg( 'confirmable-no' )->text(),
+			'edits_label' => $out->msg( 'prefs-edits' )->text(),
 			'edits' => $user->getEditCount(),
-			'groups' => sizeof( $groups ) > 0 ? implode( ', ', $groups ) : 'None',
-			'touched' => $touched ? $this->lang->userTimeAndDate( $touched, $user ) : 'Unknown',
-			'last_edit' => $lastEdit ? $this->lang->userTimeAndDate( $lastEdit, $user ) : 'Unknown',
+			'groups_label' => $out->msg( 'gloopcontrol-user-groups' )->text(),
+			'groups' => sizeof( $groups ) > 0 ? implode( $out->msg( 'comma-separator' )->text(), $groups ) : $out->msg( 'gloopcontrol-user-none' )->text(),
+			'touched_label' => $out->msg( 'gloopcontrol-user-touched' ),
+			'touched' => $touched ? $this->lang->userTimeAndDate( $touched, $user ) : $out->msg( 'gloopcontrol-user-unknown' )->text(),
+			'last_edit_label' => $out->msg( 'gloopcontrol-user-lastedit' ),
+			'last_edit' => $lastEdit ? $this->lang->userTimeAndDate( $lastEdit, $user ) : $out->msg( 'gloopcontrol-user-unknown' )->text(),
+			'ipaddress_label' => $out->msg( 'gloopcontrol-user-ipaddress' ),
+			'checkuser_label' => $out->msg( 'checkuser' ),
+			'unavailable' => $out->msg( 'gloopcontrol-user-unavailable' ),
+			'migrated_no' => $out->msg( 'gloopcontrol-user-migrated-no' ),
+			'migrated_yes' => $out->msg( 'gloopcontrol-user-migrated-yes' ),
+			'2fa_label' => $out->msg( 'gloopcontrol-user-2fa' ),
 			'rename' => Title::newFromText( 'Renameuser/' . $user->getName(), NS_SPECIAL )->getLinkURL(),
+			'rename_button' => $out->msg( 'gloopcontrol-user-button-rename' )->text(),
 			'change_email_url' => Title::newFromText( 'GloopControl/task', NS_SPECIAL )->getLinkURL( [
 				'wptask' => '0',
 				'wpusername' => $user->getName()
 			] ),
-			'reset_password_url' => Title::newFromText( 'GloopControl/task', NS_SPECIAL )->getLinkURL( [
-				'wptask' => '1',
-				'wpusername' => $user->getName()
-			] ),
+			'change_email_button' => $out->msg( 'gloopcontrol-user-button-email' )->text(),
 			'reassign_edits_url' => Title::newFromText( 'GloopControl/task', NS_SPECIAL )->getLinkURL( [
 				'wptask' => '2',
 				'wpreassign_username' => $user->getName()
 			] ),
+			'reassign_edits_button' => $out->msg( 'gloopcontrol-user-button-reassign' )->text(),
+			'reset_password_url' => Title::newFromText( 'GloopControl/task', NS_SPECIAL )->getLinkURL( [
+				'wptask' => '1',
+				'wpusername' => $user->getName()
+			] ),
+			'reset_password_button' => $out->msg( 'gloopcontrol-user-button-password' )->text(),
 		];
 
 		// Get block information
 		$block = $user->getBlock();
 		if ( $block ) {
-			$templateData['block_timestamp'] = $this->lang->userTimeAndDate( $block->getTimestamp(), $user );
-			$templateData['block_author'] = $block->getByName();
-			$templateData['block_expiry'] = $block->getExpiry();
+			$templateData['block_timestamp']=$this->lang->userTimeAndDate( $block->getTimestamp(), $user );
+			$templateData['block_info'] = $out->msg(
+				'gloopcontrol-user-blockinfo',
+				$templateData['block_timestamp'],
+				$block->getByName(),
+				$this->lang->userTimeAndDate( $block->getExpiry(), $user )
+			)->parse();
 		}
 
 		// Get info on relevant options
@@ -192,9 +224,9 @@ class SearchUser extends GloopControlSubpage {
 			$oathUser = $repo->findByUser( $user );
 			$module = $oathUser->getModule();
 			if ( !( $module instanceof IModule ) || $module->isEnabled( $oathUser ) === false ) {
-				$templateData['2fa'] = 'No';
+				$templateData['2fa'] = $out->msg( 'confirmable-no' )->text();
 			} else {
-				$templateData['2fa'] = 'Yes';
+				$templateData['2fa'] = $out->msg( 'confirmable-yes' )->text();
 			}
 		}
 

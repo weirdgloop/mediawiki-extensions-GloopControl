@@ -11,7 +11,7 @@ class ViewConfig extends GloopControlSubpage {
 	function execute() {
 		global $wgGloopControlRestrictedConfig;
 		$out = $this->special->getOutput();
-		$out->setPageTitle('Site config');
+		$out->setPageTitle( $out->msg( 'gloopcontrol-config' )->text() );
 
 		$out->addWikiMsg( 'gloopcontrol-config-intro' );
 
