@@ -50,7 +50,8 @@
 				"wgHKDFSecret",
 				"wgUpgradeKey",
 				"wgUser",
-				"wgOut"
+				"wgOut",
+				"wgSMTP"
 			]
 		}
 	},
