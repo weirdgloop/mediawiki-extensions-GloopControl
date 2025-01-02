@@ -23,7 +23,8 @@ class RunTask extends GloopControlSubpage {
 		'Change user email address' => '0',
 		'Change user password' => '1',
 		'Re-assign edits' => '2',
-		'Anonymize data' => '3'
+		'Anonymize data' => '3',
+		'Purge CDN cache' => '4'
 	];
 
 	private $reassignTables = [
@@ -59,7 +60,7 @@ class RunTask extends GloopControlSubpage {
 				'required' => true,
 				'label-message' => 'gloopcontrol-tasks-username',
 				'exists' => true,
-				'hide-if' => [ '===', 'task', '2' ]
+				'hide-if' => [ 'OR', [ '===', 'task', '2' ], [ '===', 'task', '4' ] ]
 			],
 			'email' => [
 				'type' => 'email',
@@ -91,6 +92,12 @@ class RunTask extends GloopControlSubpage {
 				'required' => true,
 				'label-message' => 'gloopcontrol-tasks-reassign-target',
 				'hide-if' => [ '!==', 'task', '2' ]
+			],
+			'cdn_url' => [
+				'type' => 'url',
+				'required' => true,
+				'label-message' => 'gloopcontrol-tasks-purge-cache',
+				'hide-if' => [ '!==', 'task', '4' ]
 			],
 			'comment' => [
 				'type' => 'text',
@@ -143,28 +150,33 @@ class RunTask extends GloopControlSubpage {
 			$res = $this->reassignEdits( $formData[ 'reassign_username' ], $formData[ 'reassign_target' ] );
 		} else if ( $task === '3' ) {
 			$res = $this->anonymiseUser( $user );
+		} else if ( $task === '4' ) {
+			MediaWikiServices::getInstance()->getHtmlCacheUpdater()->purgeUrls( $formData['cdn_url'] );
+			$res = Status::newGood( $this->special->msg( 'gloopcontrol-tasks-success-purge' ) );
 		}
 
 		if ( $res->isGood() ) {
 			$html = Html::successBox( $res->getValue() );
 
-			// Log that we did this
-			$logEntry = new ManualLogEntry( 'gloopcontrol', 'task' );
-			$logEntry->setPerformer( $this->special->getUser() );
-			if ( $user ) {
-				$logEntry->setTarget( $user->getUserPage() );
-			}
-			if ( $formData[ 'comment' ] ) {
-				$logEntry->setComment( $formData[ 'comment' ] );
-			}
-			$logEntry->setParameters( [
-				'4::task' => strtolower( array_search( $task, $this->tasks ) )
-			] );
+			// If necessary, log that we did this
+			if ( $task !== '4' ) {
+				$logEntry = new ManualLogEntry( 'gloopcontrol', 'task' );
+				$logEntry->setPerformer( $this->special->getUser() );
+				if ( $user ) {
+					$logEntry->setTarget( $user->getUserPage() );
+				}
+				if ( $formData[ 'comment' ] ) {
+					$logEntry->setComment( $formData[ 'comment' ] );
+				}
+				$logEntry->setParameters( [
+					'4::task' => strtolower( array_search( $task, $this->tasks ) )
+				] );
 
-			try {
-				$logEntry->insert();
-			} catch ( Exception $e ) {
-				// ignored
+				try {
+					$logEntry->insert();
+				} catch ( Exception $e ) {
+					// ignored
+				}
 			}
 		} else if ( $res->isOK() ) {
 			$html = Html::warningBox( $res->getMessage() );
