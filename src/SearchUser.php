@@ -38,7 +38,8 @@ class SearchUser extends GloopControlSubpage {
 				'type' => 'user',
 				'cssclass' => 'mw-autocomplete-user',
 				'label-message' => 'gloopcontrol-user-username',
-				'exists' => true
+				'exists' => true,
+				'required' => true
 			]
 		];
 
