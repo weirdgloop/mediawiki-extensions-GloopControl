@@ -39,7 +39,7 @@ class SpecialGloopControl extends SpecialPage {
 
 		if ( $wgGloopControlRequire2FA === true ) {
 			if ( !ExtensionRegistry::getInstance()->isLoaded( 'OATHAuth' ) ) {
-				throw new MissingExtensionException( 'The OATHAuth extension is not enabled, but $wglGloopControlRequire2FA is set to true.' );
+				throw new MissingExtensionException( 'The OATHAuth extension is not enabled, but $wgGloopControlRequire2FA is set to true.' );
 			}
 
 			$repo = MediaWikiServices::getInstance()->getService( 'OATHUserRepository' );
