@@ -8,6 +8,7 @@ use MediaWiki\Html\TemplateParser;
 use MediaWiki\MediaWikiServices;
 use MediaWiki\SpecialPage\SpecialPage;
 use MediaWiki\Title\Title;
+use MediaWiki\User\User;
 use MediaWiki\WikiMap\WikiMap;
 use Monolog\Handler\MissingExtensionException;
 use PermissionsError;
@@ -26,12 +27,13 @@ class SpecialGloopControl extends SpecialPage {
 		$this->links = [
 			'Main' => Title::newFromText( 'GloopControl', NS_SPECIAL )->getLinkURL(),
 			'Get user info' => Title::newFromText( 'GloopControl/user', NS_SPECIAL )->getLinkURL(),
+			'Notifications' => Title::newFromText( 'GloopControl/notifications', NS_SPECIAL )->getLinkURL(),
 			'Run task' => Title::newFromText( 'GloopControl/task', NS_SPECIAL )->getLinkURL(),
 			'Config' => Title::newFromText( 'GloopControl/config', NS_SPECIAL )->getLinkURL(),
 		];
 	}
 
-	function execute( $par ) {
+	function execute( $subPage ) {
 		global $wgGloopControlRequire2FA;
 
 		$this->setHeaders();
@@ -61,12 +63,14 @@ class SpecialGloopControl extends SpecialPage {
 		}
 		$out->addSubtitle( implode( $this->msg( 'pipe-separator' )->text(), $links ) );
 
-		if ( $par === 'config' ) {
+		if ( $subPage === 'config' ) {
 			new ViewConfig( $this );
-		} else if ( $par === 'user' ) {
+		} else if ( $subPage === 'user' ) {
 			new SearchUser( $this );
-		} else if ( $par === 'task' ) {
+		} else if ( $subPage === 'task' ) {
 			new RunTask( $this );
+		} else if ( $subPage === 'notifications' ) {
+			new Notifications( $this );
 		} else {
 			$mainHtml = $this->templateParser->processTemplate(
 				'MainPage',
@@ -88,7 +92,8 @@ class SpecialGloopControl extends SpecialPage {
 			'wiki' => WikiMap::getCurrentWikiId(),
 			'search_user_url' => $this->links['Get user info'],
 			'task_url' => $this->links['Run task'],
-			'site_config_url' => $this->links['Config']
+			'notifications_url' => $this->links['Notifications'],
+			'site_config_url' => $this->links['Config'],
 		];
 	}
 }

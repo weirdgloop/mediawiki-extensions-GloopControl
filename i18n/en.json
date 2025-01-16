@@ -10,6 +10,7 @@
 	"gloopcontrol-log-name": "Weird Gloop network log",
 	"gloopcontrol-log-header": "This is a log of actions taken by Weird Gloop staff members using [[Special:GloopControl]] on this wiki.",
 	"logentry-gloopcontrol-task": "$1 ran task \"$4\" on target $3",
+	"logentry-gloopcontrol-notif": "$1 sent a notification with header \"$4\" and content \"$5\" ($6)",
 	"gloopcontrol-config-intro": "This page outputs a serialized JSON list of global variables on this wiki that begin with <code>$wg</code> or <code>$wmg</code>. Some sensitive configuration variables are hidden from this list.",
 	"gloopcontrol-user-type": "Type",
 	"gloopcontrol-user-username": "User",
@@ -37,5 +38,18 @@
 	"gloopcontrol-tasks-success-anonymize": "Anonymized user '''$1'''",
 	"gloopcontrol-tasks-warning-email-already-set": "'''$1''' already has that email address.",
 	"gloopcontrol-tasks-success-purge": "Sent purge request",
-	"gloopcontrol-error-2fa": "You must [[Special:Manage_Two-factor_authentication|enable two-factor authentication]] to use this page."
+	"gloopcontrol-error-2fa": "You must [[Special:Manage_Two-factor_authentication|enable two-factor authentication]] to use this page.",
+	"gloopcontrol-notifications-intro": "This page allows you to manage notifications that can be sent to users using [https://www.mediawiki.org/wiki/Extension:Echo Echo]. This can be used for sending information about upcoming maintenance, or for legal reasons.",
+	"gloopcontrol-notifications-send-type": "Type of notification to send",
+	"gloopcontrol-notifications-send-target-type": "Target type",
+	"gloopcontrol-notifications-send-users": "User(s)",
+	"gloopcontrol-notifications-send-all-users": "Test",
+	"gloopcontrol-notifications-send-header": "Notification header",
+	"gloopcontrol-notifications-send-content": "Notification content",
+	"gloopcontrol-notifications-send-url": "Notification URL",
+	"gloopcontrol-notifications-send-icon": "Notification icon",
+	"echo-category-title-gloop-message": "System messages from Weird Gloop",
+	"echo-pref-tooltip-gloop-message": "Notify me when there is a system message sent by Weird Gloop.",
+	"notification-header-gloop-message": "$1",
+	"notification-body-gloop-message": "$1"
 }
