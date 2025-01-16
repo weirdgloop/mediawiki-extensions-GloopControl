@@ -48,6 +48,8 @@
 	"gloopcontrol-notifications-send-content": "Notification content",
 	"gloopcontrol-notifications-send-url": "Notification URL",
 	"gloopcontrol-notifications-send-icon": "Notification icon",
+	"gloopcontrol-notifications-success": "Created notification for $1 {{PLURAL:$1|user|users}}. It will be sent when the job is processed.",
+	"gloopcontrol-notifications-success-all-users": "Created notification for all users. It will be sent when the job is processed, which may take some time if there are a lot of users in the user table.",
 	"echo-category-title-gloop-message": "System messages from Weird Gloop",
 	"echo-pref-tooltip-gloop-message": "Notify me when there is a system message sent by Weird Gloop.",
 	"notification-header-gloop-message": "$1",

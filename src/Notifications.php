@@ -8,6 +8,7 @@ use ManualLogEntry;
 use MediaWiki\Extension\Notifications\Iterator\CallbackIterator;
 use MediaWiki\Extension\Notifications\Model\Event;
 use MediaWiki\Extension\Notifications\UserLocator;
+use MediaWiki\Html\Html;
 use MediaWiki\MediaWikiServices;
 use MediaWiki\User\UserFactory;
 use RecursiveIteratorIterator;
@@ -134,6 +135,13 @@ class Notifications extends GloopControlSubpage {
 			'6::target_type' => $targetType
 		] );
 		$logEntry->insert();
+
+		$msg = $this->special->msg( 'gloopcontrol-notifications-success', count( $recipients ) );
+		if ( $targetType === 'all_users' ) {
+			$msg = $this->special->msg( 'gloopcontrol-notifications-success-all-users' );
+		}
+
+		$this->special->getOutput()->addHTML( Html::successBox( $msg->text() ) );
 	}
 
 	public static function locateUsers( Event $event ) {
@@ -144,12 +152,12 @@ class Notifications extends GloopControlSubpage {
 			return UserLocator::locateFromEventExtra( $event, [ 'recipients' ] );
 		}
 
-		$provider = MediaWikiServices::getInstance()->getConnectionProvider();
+		$lb = MediaWikiServices::getInstance()->getDBLoadBalancer();
 
 		if ( $type === 'all_users' ) {
 			// Iterate through every user on this wiki
 			$batchRowIt = new BatchRowIterator(
-				$provider->getReplicaDatabase( false, 'gloopcontrol' ),
+				$lb->getConnection( DB_REPLICA ),
 				'user',
 				[ 'user_id' ],
 				500

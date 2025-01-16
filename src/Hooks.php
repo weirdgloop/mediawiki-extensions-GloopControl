@@ -9,7 +9,7 @@ class Hooks implements BeforeCreateEchoEventHook {
 		&$notifications, &$notificationCategories, &$notificationIcons
 	) {
 		$notificationCategories['gloop-message'] = [
-			'priority' => 9,
+			'priority' => 1,
 			'tooltip' => 'echo-pref-tooltip-gloop-message',
 			'no-dismiss' => [
 				'web'
