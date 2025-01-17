@@ -122,33 +122,16 @@ class Notifications extends GloopControlSubpage {
 				]
 			] );
 		} else if ( $targetType === 'all_users' ) {
-			// To avoid memory issues when sending to all users on a (large) wiki, we're going to create a separate
-			// event for a batch of users.
-			$db = MediaWikiServices::getInstance()->getDBLoadBalancer()->getConnection( DB_REPLICA, 'vslow' );
-			$max = $db->newSelectQueryBuilder()
-				->select( 'max(user_id)' )
-				->from( 'user' )
-				->caller( __METHOD__ )
-				->fetchField();
-
-			$batchSize = 500;
-			for ( $start = 1; $start <= $max; $start += $batchSize ) {
-				Event::create( [
-					'type' => $formData['type'],
-					'agent' => $this->special->getUser(),
-					'title' => null,
-					'extra' => [
-						'recipients' => [],
-						'header' => $formData['header'],
-						'content' => $formData['content'],
-						'target_type' => $targetType,
-						'url' => $formData['url'],
-						'icon' => $formData['icon'],
-						'start' => $start,
-						'end' => $start + $batchSize - 1
-					]
-				] );
-			}
+			// Create a job which will handle looping through the entire user database and performing notifications
+			$job = new NotifyAllUsersJob( [
+				'type' => $formData['type'],
+				'agent' => $this->special->getUser()->getId(),
+				'header' => $formData['header'],
+				'content' => $formData['content'],
+				'url' => $formData['url'],
+				'icon' => $formData['icon']
+			] );
+			MediaWikiServices::getInstance()->getJobQueueGroup()->push( $job );
 		}
 
 		$logEntry = new ManualLogEntry( 'gloopcontrol', 'notif' );

@@ -89,6 +89,9 @@
 	"Hooks": {
 		"BeforeCreateEchoEvent": "main"
 	},
+	"JobClasses": {
+		"NotifyAllUsersJob": "MediaWiki\\Extension\\GloopControl\\NotifyAllUsersJob"
+	},
 	"HookHandlers": {
 		"main": {
 			"class": "MediaWiki\\Extension\\GloopControl\\Hooks"
