@@ -3,15 +3,12 @@
 
 namespace MediaWiki\Extension\GloopControl;
 
-use BatchRowIterator;
 use ManualLogEntry;
-use MediaWiki\Extension\Notifications\Iterator\CallbackIterator;
 use MediaWiki\Extension\Notifications\Model\Event;
 use MediaWiki\Extension\Notifications\UserLocator;
 use MediaWiki\Html\Html;
 use MediaWiki\MediaWikiServices;
 use MediaWiki\User\UserFactory;
-use RecursiveIteratorIterator;
 
 class Notifications extends GloopControlSubpage {
 
@@ -110,21 +107,49 @@ class Notifications extends GloopControlSubpage {
 					$recipients[] = $userId;
 				}
 			}
-		}
 
-		Event::create( [
-			'type' => $formData['type'],
-			'agent' => $this->special->getUser(),
-			'title' => null,
-			'extra' => [
-				'recipients' => $recipients,
-				'header' => $formData['header'],
-				'content' => $formData['content'],
-				'target_type' => $targetType,
-				'url' => $formData['url'],
-				'icon' => $formData['icon']
-			]
-		] );
+			Event::create( [
+				'type' => $formData['type'],
+				'agent' => $this->special->getUser(),
+				'title' => null,
+				'extra' => [
+					'recipients' => $recipients,
+					'header' => $formData['header'],
+					'content' => $formData['content'],
+					'target_type' => $targetType,
+					'url' => $formData['url'],
+					'icon' => $formData['icon']
+				]
+			] );
+		} else if ( $targetType === 'all_users' ) {
+			// To avoid memory issues when sending to all users on a (large) wiki, we're going to create a separate
+			// event for a batch of users.
+			$db = MediaWikiServices::getInstance()->getDBLoadBalancer()->getConnection( DB_REPLICA, 'vslow' );
+			$max = $db->newSelectQueryBuilder()
+				->select( 'max(user_id)' )
+				->from( 'user' )
+				->caller( __METHOD__ )
+				->fetchField();
+
+			$batchSize = 500;
+			for ( $start = 1; $start <= $max; $start += $batchSize ) {
+				Event::create( [
+					'type' => $formData['type'],
+					'agent' => $this->special->getUser(),
+					'title' => null,
+					'extra' => [
+						'recipients' => [],
+						'header' => $formData['header'],
+						'content' => $formData['content'],
+						'target_type' => $targetType,
+						'url' => $formData['url'],
+						'icon' => $formData['icon'],
+						'start' => $start,
+						'end' => $start + $batchSize - 1
+					]
+				] );
+			}
+		}
 
 		$logEntry = new ManualLogEntry( 'gloopcontrol', 'notif' );
 		$logEntry->setPerformer( $this->special->getUser() );
@@ -145,28 +170,24 @@ class Notifications extends GloopControlSubpage {
 	}
 
 	public static function locateUsers( Event $event ) {
-		global $wglDatabases;
-
 		$type = $event->getExtraParam( 'target_type' );
 		if ( $type === 'users' ) {
 			return UserLocator::locateFromEventExtra( $event, [ 'recipients' ] );
 		}
 
-		$lb = MediaWikiServices::getInstance()->getDBLoadBalancer();
-
 		if ( $type === 'all_users' ) {
-			// Iterate through every user on this wiki
-			$batchRowIt = new BatchRowIterator(
-				$lb->getConnection( DB_REPLICA ),
-				'user',
-				[ 'user_id' ],
-				500
-			);
-			$batchRowIt->setCaller( __METHOD__ );
-			$recursiveIt = new RecursiveIteratorIterator( $batchRowIt );
-			return new CallbackIterator( $recursiveIt, static function ($row ) {
-				return MediaWikiServices::getInstance()->getUserFactory()->newFromRow( $row );
-			} );
+			$start = $event->getExtraParam( 'start' );
+			$end = $event->getExtraParam( 'end' );
+			$users = [];
+
+			for ( $id = $start; $id <= $end; $id++ ) {
+				$user = MediaWikiServices::getInstance()->getUserFactory()->newFromId( $id );
+				if ( $user->getName() !== 'Unknown user' && $user->isRegistered() ) {
+					$users[] = $user;
+				}
+			}
+
+			return $users;
 		}
 
 		return [];
