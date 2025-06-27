@@ -62,6 +62,7 @@
 	"ResourceModules": {
 		"ext.gloopcontrol.styles": {
 			"class": "MediaWiki\\ResourceLoader\\CodexModule",
+			"codexStyleOnly": true,
 			"styles": "ext.gloopcontrol.styles/styles.less"
 		}
 	},
