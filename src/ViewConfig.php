@@ -24,7 +24,7 @@ class ViewConfig extends GloopControlSubpage {
 			}
 
 			// Only display global variables that start with $wg or $wmg
-			if ( preg_match( '/^wm?g/', $k ) ) {
+			if ( preg_match( '/(^wm?g|^smwg)/', $k ) ) {
 				$settings[$k] = $v;
 			}
 		}
