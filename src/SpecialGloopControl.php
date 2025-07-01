@@ -25,11 +25,11 @@ class SpecialGloopControl extends SpecialPage {
 
 		// Create our relevant page links
 		$this->links = [
-			'Main' => Title::newFromText( 'GloopControl', NS_SPECIAL )->getLinkURL(),
-			'Get user info' => Title::newFromText( 'GloopControl/user', NS_SPECIAL )->getLinkURL(),
-			'Notifications' => Title::newFromText( 'GloopControl/notifications', NS_SPECIAL )->getLinkURL(),
-			'Run task' => Title::newFromText( 'GloopControl/task', NS_SPECIAL )->getLinkURL(),
-			'Config' => Title::newFromText( 'GloopControl/config', NS_SPECIAL )->getLinkURL(),
+			'main' => Title::newFromText( 'GloopControl', NS_SPECIAL )->getLinkURL(),
+			'getuserinfo' => Title::newFromText( 'GloopControl/user', NS_SPECIAL )->getLinkURL(),
+			'notifications' => Title::newFromText( 'GloopControl/notifications', NS_SPECIAL )->getLinkURL(),
+			'runtask' => Title::newFromText( 'GloopControl/task', NS_SPECIAL )->getLinkURL(),
+			'config' => Title::newFromText( 'GloopControl/config', NS_SPECIAL )->getLinkURL(),
 		];
 	}
 
@@ -59,7 +59,7 @@ class SpecialGloopControl extends SpecialPage {
 		// Create the subtitle
 		$links = [];
 		foreach ( $this->links as $k => $v ) {
-			$links[] = '<a href="' . $v . '">' . $k . '</a>';
+			$links[] = '<a href="' . $v . '">' . $this->msg( 'gloopcontrol-linkbar-' . $k )->text() . '</a>';
 		}
 		$out->addSubtitle( implode( $this->msg( 'pipe-separator' )->text(), $links ) );
 
@@ -84,16 +84,33 @@ class SpecialGloopControl extends SpecialPage {
 		global $wgServer, $wgDBname, $wgSharedDB;
 
 		return [
+			'search_user' => $this->msg( 'gloopcontrol-user' )->text(),
+			'search_user_desc' => $this->msg( 'gloopcontrol-user-desc' )->text(),
+			'search_user_url' => $this->links[ 'getuserinfo' ],
+			'task' => $this->msg( 'gloopcontrol-tasks' )->text(),
+			'task_desc' => $this->msg( 'gloopcontrol-tasks-desc' )->text(),
+			'task_url' => $this->links[ 'runtask' ],
+			'notifications' => $this->msg( 'gloopcontrol-notifications' )->text(),
+			'notifications_desc' => $this->msg( 'gloopcontrol-notifications-desc' )->text(),
+			'notifications_url' => $this->links[ 'notifications' ],
+			'site_config' => $this->msg( 'gloopcontrol-config' )->text(),
+			'site_config_desc' => $this->msg( 'gloopcontrol-config-desc' )->text(),
+			'site_config_url' => $this->links[ 'config' ],
+			'infosection' => $this->msg( 'gloopcontrol-info' )->text(),
+			'server_label' => $this->msg( 'gloopcontrol-info-server' )->text(),
+			'space' => $this->msg( 'gloopcontrol-textformat-space' )->text(),
 			'server' => $wgServer,
+			'database_label' => $this->msg( 'gloopcontrol-info-database' )->text(),
 			'database' => $wgDBname,
+			'shared_database_label' => $this->msg( 'gloopcontrol-info-database-shared' )->text(),
 			'shared_database' => $wgSharedDB,
-			'host' => wfHostname(),
-			'php' => phpversion(),
+			'wiki_label' => $this->msg( 'gloopcontrol-info-wiki' )->text(),
 			'wiki' => WikiMap::getCurrentWikiId(),
-			'search_user_url' => $this->links['Get user info'],
-			'task_url' => $this->links['Run task'],
-			'notifications_url' => $this->links['Notifications'],
-			'site_config_url' => $this->links['Config'],
+			'task_url' => $this->links[ 'runtask' ],
+			'host_label' => $this->msg( 'gloopcontrol-info-host' )->text(),
+			'host' => wfHostname(),
+			'php_label' => $this->msg( 'gloopcontrol-info-php' )->text(),
+			'php' => phpversion(),
 		];
 	}
 }

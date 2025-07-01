@@ -21,7 +21,7 @@ class Notifications extends GloopControlSubpage {
 
 	function execute() {
 		$out = $this->special->getOutput();
-		$out->setPageTitle( 'Manage notifications' );
+		$out->setPageTitle( $out->msg( 'gloopcontrol-notifications-title' )->text() );
 		$out->addWikiMsg( 'gloopcontrol-notifications-intro' );
 
 		$this->displaySendNotificationForm();
@@ -42,8 +42,8 @@ class Notifications extends GloopControlSubpage {
 				'required' => true,
 				'label-message' => 'gloopcontrol-notifications-send-type',
 				'options' => [
-					'Notice' => 'gloop-notice',
-					'Alert' => 'gloop-alert'
+					$this->special->getOutput()->msg( 'echo-notification-notice-text-only' )->text() => 'gloop-notice',
+					$this->special->getOutput()->msg( 'echo-notification-alert-text-only' )->text() => 'gloop-alert'
 				]
 			],
 			'target_type' => [
@@ -51,9 +51,9 @@ class Notifications extends GloopControlSubpage {
 				'required' => true,
 				'label-message' => 'gloopcontrol-notifications-send-target-type',
 				'options' => [
-					'Send to specific user(s)' => 'users',
-					'Send to all users on this wiki' => 'all_users',
-//					'Send to all users on entire network (all wikis)' => 'all_network'
+					$this->special->getOutput()->msg( 'gloopcontrol-notifications-send-target-type-users' )->text() => 'users',
+					$this->special->getOutput()->msg( 'gloopcontrol-notifications-send-target-type-all-users' )->text() => 'all_users',
+//					$this->special->getOutput()->msg( 'gloopcontrol-notifications-send-target-type-all-network' )->text() => 'all_network'
 				]
 			],
 			'user' => [

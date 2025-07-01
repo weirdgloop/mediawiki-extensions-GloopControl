@@ -40,7 +40,7 @@ class RunTask extends GloopControlSubpage {
 
 	function execute() {
 		$out = $this->special->getOutput();
-		$out->setPageTitle('Run task');
+		$out->setPageTitle( $out->msg( 'gloopcontrol-tasks' )->text() );
 
 		$out->addWikiMsg('gloopcontrol-tasks-intro');
 		$this->displayForm();
@@ -53,7 +53,13 @@ class RunTask extends GloopControlSubpage {
 				'type' => 'select',
 				'required' => true,
 				'label-message' => 'gloopcontrol-tasks-task',
-				'options' => $this->tasks
+				'options' => [
+					$this->special->getOutput()->msg( 'gloopcontrol-tasks-task-emailaddress' )->text() => '0',
+					$this->special->getOutput()->msg( 'gloopcontrol-tasks-task-password' )->text() => '1',
+					$this->special->getOutput()->msg( 'gloopcontrol-tasks-task-reassign' )->text() => '2',
+					$this->special->getOutput()->msg( 'gloopcontrol-tasks-task-anonymize' )->text() => '3',
+					$this->special->getOutput()->msg( 'gloopcontrol-tasks-task-purge' )->text() => '4',
+				]
 			],
 			'username' => [
 				'type' => 'user',

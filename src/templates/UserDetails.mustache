@@ -1,47 +1,47 @@
 <div class="ext-gloopcontrol-user-details">
-	<h3>{{ name }} (<code>{{ id }}</code>)</h3>
+	<h3>{{ name }}{{ space }}{{ parentheses_start }}<code>{{ id }}</code>{{ parentheses_end }}</h3>
 	<div class="user-info">
 		<ul>
-			<li><strong>Registered at:</strong> {{ registered }}</li>
-			<li><strong>Email:</strong> {{ email }} ({{#email_authed}}confirmed at {{ email_authed }}{{/email_authed}}{{^email_authed}}<span style="color: red;">unconfirmed</span>{{/email_authed}})</li>
-			<li><strong>Real name:</strong> {{ real }}</li>
+			<li><strong>{{ registered_label }}</strong>{{ space }}{{ registered }}</li>
+			<li><strong>{{ email_label }}</strong>{{ space }}{{ email }}{{ space }}{{ parentheses_start }}{{#email_authed}}{{ email_confirmed }}{{ space }}{{ email_authed }}{{/email_authed}}{{^email_authed}}<span style="color: red;">{{ email_unconfirmed }}</span>{{/email_authed}}{{ parentheses_end }}</li>
+			<li><strong>{{ real_label }}</strong>{{ space }}{{ real }}</li>
 		</ul>
 		<ul>
-			<li><strong>Is blocked here:</strong> {{#block_timestamp}}<span style="color: red;">Yes</span>, since {{block_timestamp}}. Block added by {{block_author}}. Expires at {{block_expiry}}.{{/block_timestamp}}{{^block_timestamp}}No{{/block_timestamp}}</li>
-			<li><strong>Edits:</strong> {{ edits }}</li>
-			<li><strong>Groups:</strong> {{ groups }}</li>
+			<li><strong>{{ block_label }}</strong>{{ space }}{{#block_timestamp}}<span style="color: red;">{{ yes }}</span>{{ block_info }}{{/block_timestamp}}{{^block_timestamp}}{{ no }}{{/block_timestamp}}</li>
+			<li><strong>{{ edits_label }}</strong>{{ space }}{{ edits }}</li>
+			<li><strong>{{ groups_label }}</strong>{{ space }}{{ groups }}</li>
 		</ul>
 		<ul>
-			<li><strong>Last touched:</strong> {{ touched }}</li>
-			<li><strong>Last edit:</strong> {{ last_edit }}</li>
-			<li><strong>IP address:</strong> {{#checkuser}}<a href="{{ checkuser }}">CheckUser</a>{{/checkuser}}{{^checkuser}}Unavailable{{/checkuser}}</li>
+			<li><strong>{{ touched_label }}</strong>{{ space }}{{ touched }}</li>
+			<li><strong>{{ last_edit_label }}</strong>{{ space }}{{ last_edit }}</li>
+			<li><strong>{{ ipaddress_label }}</strong>{{ space }}{{#checkuser}}<a href="{{ checkuser }}">{{ checkuser_label }}</a>{{/checkuser}}{{^checkuser}}{{ unavailable }}{{/checkuser}}</li>
 		</ul>
 		<ul>
-			<li>{{#migration}}<span style="color: red;">Needs external wiki migration</span>{{/migration}}{{^migration}}No external migration needed{{/migration}}</li>
-			<li><strong>2FA enabled:</strong> {{ 2fa }}{{^2fa}}Unavailable{{/2fa}}</li>
+			<li>{{#migration}}<span style="color: red;">{{ migrated_no }}</span>{{/migration}}{{^migration}}{{ migrated_yes }}{{/migration}}</li>
+			<li><strong>{{ 2fa_label }}</strong>{{ space }}{{ 2fa }}{{^2fa}}{{ unavailable }}{{/2fa}}</li>
 		</ul>
 	</div>
 	<div style="margin-top: 1em;">
 		{{#rename}}
 		<a href="{{ rename }}">
 			<button class="cdx-button">
-				Rename
+				{{ rename_button }}
 			</button>
 		</a>
 		{{/rename}}
 		<a href="{{ change_email_url }}">
 			<button class="cdx-button">
-				Change email
+				{{ change_email_button }}
 			</button>
 		</a>
 		<a href="{{ reassign_edits_url }}">
 			<button class="cdx-button">
-				Reassign edits
+				{{ reassign_edits_button }}
 			</button>
 		</a>
 		<a href="{{ reset_password_url }}">
 			<button class="cdx-button cdx-button--action-destructive">
-				Reset password
+				{{ reset_password_button }}
 			</button>
 		</a>
 	</div>
