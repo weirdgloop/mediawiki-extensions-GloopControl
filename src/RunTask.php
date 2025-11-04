@@ -36,11 +36,11 @@ class RunTask extends GloopControlSubpage {
 	];
 
 	public function __construct( SpecialGloopControl $special ) {
-		parent::__construct( $special );
-
 		$services = MediaWikiServices::getInstance();
 		$this->uf = $services->getUserFactory();
-		$this->statusFormatter = $services->getFormatterFactory()->getStatusFormatter( $this->special->getContext() );
+		$this->statusFormatter = $services->getFormatterFactory()->getStatusFormatter( $special->getContext() );
+
+		parent::__construct( $special );
 	}
 
 	public function execute(): void {
