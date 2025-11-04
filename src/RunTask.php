@@ -268,6 +268,10 @@ class RunTask extends GloopControlSubpage {
 		if ( !$targetUser ) {
 			return $status->fatal( 'gloopcontrol-tasks-error-user-not-found', $target );
 		}
+		if ( IPUtils::isIPAddress( $targetUser->getName() ) ) {
+			// see https://phabricator.wikimedia.org/T373914
+			return $status->fatal( 'gloopcontrol-tasks-error-reassign-ip', $target );
+		}
 
 		$dbw = $services->getDBLoadBalancer()->getConnection( DB_PRIMARY );
 

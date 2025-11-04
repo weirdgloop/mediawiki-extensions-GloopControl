@@ -33,6 +33,7 @@
 	"gloopcontrol-tasks-error-user-anonymize-failed": "Could not anonymize '''$1'''. An error occurred.",
 	"gloopcontrol-tasks-error-user-self": "You cannot perform this action on yourself.",
 	"gloopcontrol-tasks-error-user-temp": "You cannot perform this action on a temporary user.",
+	"gloopcontrol-tasks-error-reassign-ip": "You cannot re-assign edits to an IP address.",
 	"gloopcontrol-tasks-success-email": "Changed email for '''$1''' to '''$2'''",
 	"gloopcontrol-tasks-success-password": "Changed password for '''$1'''",
 	"gloopcontrol-tasks-success-reassign": "Re-assigned edits from '''$1''' to '''$2''' on this wiki",
