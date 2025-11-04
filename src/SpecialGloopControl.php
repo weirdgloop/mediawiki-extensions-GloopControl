@@ -8,18 +8,16 @@ use MediaWiki\Html\TemplateParser;
 use MediaWiki\MediaWikiServices;
 use MediaWiki\SpecialPage\SpecialPage;
 use MediaWiki\Title\Title;
-use MediaWiki\User\User;
 use MediaWiki\WikiMap\WikiMap;
 use Monolog\Handler\MissingExtensionException;
 use PermissionsError;
 
 class SpecialGloopControl extends SpecialPage {
-
 	public TemplateParser $templateParser;
 
 	private array $links;
 
-	function __construct() {
+	public function __construct() {
 		parent::__construct( 'GloopControl', 'gloopcontrol' );
 		$this->templateParser = new TemplateParser( __DIR__ . '/templates' );
 
@@ -33,15 +31,17 @@ class SpecialGloopControl extends SpecialPage {
 		];
 	}
 
-	function execute( $subPage ) {
-		global $wgGloopControlRequire2FA;
-
+	/**
+	 * @param string|null $subPage
+	 */
+	public function execute( $subPage ): void {
 		$this->setHeaders();
 		$this->checkPermissions();
 
-		if ( $wgGloopControlRequire2FA === true ) {
+		if ( $this->getConfig()->get( 'GloopControlRequire2FA' ) === true ) {
 			if ( !ExtensionRegistry::getInstance()->isLoaded( 'OATHAuth' ) ) {
-				throw new MissingExtensionException( 'The OATHAuth extension is not enabled, but $wgGloopControlRequire2FA is set to true.' );
+				throw new MissingExtensionException(
+					'The OATHAuth extension is not enabled, but $wgGloopControlRequire2FA is set to true.' );
 			}
 
 			$repo = MediaWikiServices::getInstance()->getService( 'OATHUserRepository' );
@@ -65,11 +65,11 @@ class SpecialGloopControl extends SpecialPage {
 
 		if ( $subPage === 'config' ) {
 			new ViewConfig( $this );
-		} else if ( $subPage === 'user' ) {
+		} elseif ( $subPage === 'user' ) {
 			new SearchUser( $this );
-		} else if ( $subPage === 'task' ) {
+		} elseif ( $subPage === 'task' ) {
 			new RunTask( $this );
-		} else if ( $subPage === 'notifications' ) {
+		} elseif ( $subPage === 'notifications' ) {
 			new Notifications( $this );
 		} else {
 			$mainHtml = $this->templateParser->processTemplate(
@@ -80,13 +80,11 @@ class SpecialGloopControl extends SpecialPage {
 		}
 	}
 
-	private function getMainPageData() {
-		global $wgServer, $wgDBname, $wgSharedDB;
-
+	private function getMainPageData(): array {
 		return [
-			'server' => $wgServer,
-			'database' => $wgDBname,
-			'shared_database' => $wgSharedDB,
+			'server' => $this->getConfig()->get( 'Server' ),
+			'database' => $this->getConfig()->get( 'DBname' ),
+			'shared_database' => $this->getConfig()->get( 'SharedDB' ),
 			'host' => wfHostname(),
 			'php' => phpversion(),
 			'wiki' => WikiMap::getCurrentWikiId(),

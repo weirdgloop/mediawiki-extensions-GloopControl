@@ -4,6 +4,7 @@ namespace MediaWiki\Extension\GloopControl;
 
 use ExtensionRegistry;
 use FormatJson;
+use HTMLForm;
 use Language;
 use MediaWiki\Extension\OATHAuth\IModule;
 use MediaWiki\Html\Html;
@@ -13,7 +14,6 @@ use MediaWiki\User\UserFactory;
 use Wikimedia\Rdbms\ILoadBalancer;
 
 class SearchUser extends GloopControlSubpage {
-
 	private UserFactory $userFactory;
 
 	private ILoadBalancer $loadBalancer;
@@ -22,7 +22,7 @@ class SearchUser extends GloopControlSubpage {
 
 	private Language $lang;
 
-	function __construct( SpecialGloopControl $special ) {
+	public function __construct( SpecialGloopControl $special ) {
 		$this->userFactory = MediaWikiServices::getInstance()->getUserFactory();
 		$this->loadBalancer = MediaWikiServices::getInstance()->getDBLoadBalancerFactory()->getMainLB();
 		$this->er = ExtensionRegistry::getInstance();
@@ -30,12 +30,12 @@ class SearchUser extends GloopControlSubpage {
 		parent::__construct( $special );
 	}
 
-	function execute() {
-		$this->special->getOutput()->setPageTitle('Get user information');
+	public function execute(): void {
+		$this->special->getOutput()->setPageTitle( 'Get user information' );
 		$this->displayForm();
 	}
 
-	private function displayForm() {
+	private function displayForm(): void {
 		// Build the form
 		$desc = [
 			'type' => [
@@ -71,24 +71,24 @@ class SearchUser extends GloopControlSubpage {
 		];
 
 		// Display the form
-		$form = \HTMLForm::factory( 'ooui', $desc, $this->special->getContext() );
+		$form = HTMLForm::factory( 'ooui', $desc, $this->special->getContext() );
 		$form
 			->setSubmitCallback( [ $this, 'onFormSubmit' ] )
 			->show();
 	}
 
-	public function onFormSubmit( $formData ) {
+	public function onFormSubmit( array $formData ): void {
 		$out = $this->special->getOutput();
 		$type = $formData[ 'type' ];
 
 		if ( $type === 'username' ) {
 			$name = $formData[ 'user' ];
 			$user = $this->userFactory->newFromName( $name );
-		} else if ( $type === 'id' ) {
+		} elseif ( $type === 'id' ) {
 			$id = $formData[ 'id' ];
 			$user = $this->userFactory->newFromId( $id );
 			$user->loadFromId();
-		} else if ( $type === 'email' ) {
+		} elseif ( $type === 'email' ) {
 			$email = $formData[ 'email' ];
 
 			// Find user in the DB by the email address
@@ -101,12 +101,12 @@ class SearchUser extends GloopControlSubpage {
 
 			$numRows = $res->numRows();
 			if ( $numRows === 0 ) {
-				$out->addHTML(Html::errorBox(
+				$out->addHTML( Html::errorBox(
 					$out->msg( 'gloopcontrol-user-not-found', $email )
 						->parse()
-				));
+				) );
 				return;
-			} else if ( $numRows === 1 ) {
+			} elseif ( $numRows === 1 ) {
 				// There is one user with this email address
 				$row = $res->current();
 			} else {
@@ -116,11 +116,11 @@ class SearchUser extends GloopControlSubpage {
 					$html[] = $row->user_name;
 				}
 
-				$out->addHTML(Html::noticeBox(
+				$out->addHTML( Html::noticeBox(
 					$out->msg( 'gloopcontrol-user-multiple-email', $email )
 						->parse() . '<ul><li>' . implode( '</li><li>', $html ) . '</li></ul>',
 					'gloopcontrol-user-multiple-email'
-				));
+				) );
 				return;
 			}
 
@@ -130,10 +130,10 @@ class SearchUser extends GloopControlSubpage {
 		}
 
 		if ( $user === null || $user->getId() === 0 ) {
-			$out->addHTML(Html::errorBox(
+			$out->addHTML( Html::errorBox(
 				$out->msg( 'gloopcontrol-user-not-found', $name ?? $email ?? $id ?? '' )
 					->parse()
-			));
+			) );
 			return;
 		}
 
@@ -151,7 +151,7 @@ class SearchUser extends GloopControlSubpage {
 			'temp' => $user->isTemp(),
 			'email_authed' => $emailAuth ? $this->lang->userTimeAndDate( $emailAuth, $user ) : null,
 			'edits' => $user->getEditCount(),
-			'groups' => sizeof( $groups ) > 0 ? implode( ', ', $groups ) : 'None',
+			'groups' => count( $groups ) > 0 ? implode( ', ', $groups ) : 'None',
 			'touched' => $touched ? $this->lang->userTimeAndDate( $touched, $user ) : 'Unknown',
 			'last_edit' => $lastEdit ? $this->lang->userTimeAndDate( $lastEdit, $user ) : 'Unknown',
 			'rename' => Title::newFromText( 'Renameuser/' . $user->getName(), NS_SPECIAL )->getLinkURL(),
@@ -184,7 +184,8 @@ class SearchUser extends GloopControlSubpage {
 
 		// If certain extensions are enabled, we can integrate with them/show links.
 		if ( $this->er->isLoaded( 'CheckUser' ) ) {
-			$templateData['checkuser'] = Title::newFromText( 'CheckUser/' . $user->getName(), NS_SPECIAL )->getLinkURL();
+			$templateData['checkuser'] = Title::newFromText(
+				'CheckUser/' . $user->getName(), NS_SPECIAL )->getLinkURL();
 		}
 
 		if ( $this->er->isLoaded( 'OATHAuth' ) ) {

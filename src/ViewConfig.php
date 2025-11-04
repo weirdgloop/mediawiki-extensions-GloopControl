@@ -7,11 +7,10 @@ use FormatJson;
 use MediaWiki\SyntaxHighlight\SyntaxHighlight;
 
 class ViewConfig extends GloopControlSubpage {
-
-	function execute() {
+	public function execute(): void {
 		global $wgGloopControlRestrictedConfig;
 		$out = $this->special->getOutput();
-		$out->setPageTitle('Site config');
+		$out->setPageTitle( 'Site config' );
 
 		$out->addWikiMsg( 'gloopcontrol-config-intro' );
 
@@ -36,7 +35,7 @@ class ViewConfig extends GloopControlSubpage {
 		$out->addHTML( $this->getParsedConfigHtml( $json ) );
 	}
 
-	private function getParsedConfigHtml( $json ) {
+	private function getParsedConfigHtml( string $json ): string {
 		global $wgSyntaxHighlightMaxBytes;
 
 		// If the GeSHi syntax highlight extension is loaded, syntax highlight the JSON.

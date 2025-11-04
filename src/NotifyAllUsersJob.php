@@ -9,12 +9,7 @@ use MediaWiki\MediaWikiServices;
 use Wikimedia\Rdbms\IDatabase;
 
 class NotifyAllUsersJob extends Job implements GenericParameterJob {
-
-	/** @var IDatabase|null */
-	private $dbr;
-
-	/** @var IDatabase|null */
-	private $dbw;
+	private IDatabase|false $dbr;
 
 	public function __construct( array $params ) {
 		parent::__construct( 'NotifyAllUsersJob', $params );
@@ -23,7 +18,7 @@ class NotifyAllUsersJob extends Job implements GenericParameterJob {
 		$this->dbr = MediaWikiServices::getInstance()->getDBLoadBalancer()->getConnection( DB_REPLICA, 'vslow' );
 	}
 
-	public function run() {
+	public function run(): void {
 		// To avoid memory issues when sending to all users on a (large) wiki, we're going to create a separate
 		// event for a batch of users.
 		$max = $this->dbr->newSelectQueryBuilder()

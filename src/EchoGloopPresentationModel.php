@@ -3,29 +3,30 @@
 namespace MediaWiki\Extension\GloopControl;
 
 use MediaWiki\Extension\Notifications\Formatters\EchoEventPresentationModel;
+use MediaWiki\Message\Message;
 
 class EchoGloopPresentationModel extends EchoEventPresentationModel {
-	public function getIconType() {
+	public function getIconType(): string {
 		return $this->event->getExtraParam( 'icon' ) ?? 'robot';
 	}
 
-	public function getHeaderMessage() {
-		return $this->msg( 'notification-header-gloop-message')
+	public function getHeaderMessage(): Message {
+		return $this->msg( 'notification-header-gloop-message' )
 			->plaintextParams( $this->event->getExtraParam( 'header' ) );
 	}
 
-	public function getSubjectMessage() {
+	public function getSubjectMessage(): Message {
 		return $this->getHeaderMessage();
 	}
 
-	public function getBodyMessage() {
+	public function getBodyMessage(): Message|false {
 		$content = $this->event->getExtraParam( 'content' );
 
 		return $content ? $this->msg( 'notification-body-gloop-message' )
 			->plaintextParams( $content ) : false;
 	}
 
-	public function getPrimaryLink() {
+	public function getPrimaryLink(): array|false {
 		$url = $this->event->getExtraParam( 'url' );
 		if ( !$url ) {
 			return false;

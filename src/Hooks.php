@@ -6,8 +6,10 @@ use MediaWiki\Extension\Notifications\Hooks\BeforeCreateEchoEventHook;
 
 class Hooks implements BeforeCreateEchoEventHook {
 	public function onBeforeCreateEchoEvent(
-		&$notifications, &$notificationCategories, &$notificationIcons
-	) {
+		array &$notifications,
+		array &$notificationCategories,
+		array &$notificationIcons
+	): void {
 		$notificationCategories['gloop-message'] = [
 			'priority' => 1,
 			'tooltip' => 'echo-pref-tooltip-gloop-message',

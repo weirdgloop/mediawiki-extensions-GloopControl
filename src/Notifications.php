@@ -11,15 +11,14 @@ use MediaWiki\MediaWikiServices;
 use MediaWiki\User\UserFactory;
 
 class Notifications extends GloopControlSubpage {
-
 	private UserFactory $userFactory;
 
-	function __construct(SpecialGloopControl $special) {
+	public function __construct( SpecialGloopControl $special ) {
 		$this->userFactory = MediaWikiServices::getInstance()->getUserFactory();
-		parent::__construct($special);
+		parent::__construct( $special );
 	}
 
-	function execute() {
+	public function execute(): void {
 		$out = $this->special->getOutput();
 		$out->setPageTitle( 'Manage notifications' );
 		$out->addWikiMsg( 'gloopcontrol-notifications-intro' );
@@ -27,11 +26,9 @@ class Notifications extends GloopControlSubpage {
 		$this->displaySendNotificationForm();
 	}
 
-	private function displaySendNotificationForm() {
-		global $wgEchoNotificationIcons;
-
+	private function displaySendNotificationForm(): void {
 		$icons = [];
-		foreach ( array_keys( $wgEchoNotificationIcons ) as $icon ) {
+		foreach ( array_keys( $this->special->getConfig()->get( 'EchoNotificationIcons' ) ) as $icon ) {
 			$icons[ $icon ] = $icon;
 		}
 
@@ -53,7 +50,7 @@ class Notifications extends GloopControlSubpage {
 				'options' => [
 					'Send to specific user(s)' => 'users',
 					'Send to all users on this wiki' => 'all_users',
-//					'Send to all users on entire network (all wikis)' => 'all_network'
+					// 'Send to all users on entire network (all wikis)' => 'all_network'
 				]
 			],
 			'user' => [
@@ -96,7 +93,7 @@ class Notifications extends GloopControlSubpage {
 			->show();
 	}
 
-	public function onFormSubmit( $formData ) {
+	public function onFormSubmit( array $formData ): void {
 		$targetType = $formData['target_type'];
 		$recipients = [];
 
@@ -121,7 +118,7 @@ class Notifications extends GloopControlSubpage {
 					'icon' => $formData['icon']
 				]
 			] );
-		} else if ( $targetType === 'all_users' ) {
+		} elseif ( $targetType === 'all_users' ) {
 			// Create a job which will handle looping through the entire user database and performing notifications
 			$job = new NotifyAllUsersJob( [
 				'type' => $formData['type'],
@@ -152,7 +149,7 @@ class Notifications extends GloopControlSubpage {
 		$this->special->getOutput()->addHTML( Html::successBox( $msg->text() ) );
 	}
 
-	public static function locateUsers( Event $event ) {
+	public static function locateUsers( Event $event ): array {
 		$type = $event->getExtraParam( 'target_type' );
 		if ( $type === 'users' ) {
 			return UserLocator::locateFromEventExtra( $event, [ 'recipients' ] );
