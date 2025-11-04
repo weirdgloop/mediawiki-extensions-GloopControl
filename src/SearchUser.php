@@ -148,7 +148,7 @@ class SearchUser extends GloopControlSubpage {
 			'name' => $user->getName(),
 			'registered' => $reg ? $this->lang->userTimeAndDate( $reg, $user ) : 'Unknown',
 			'email' => $user->getEmail(),
-			'real' => $user->getRealName(),
+			'temp' => $user->isTemp(),
 			'email_authed' => $emailAuth ? $this->lang->userTimeAndDate( $emailAuth, $user ) : null,
 			'edits' => $user->getEditCount(),
 			'groups' => sizeof( $groups ) > 0 ? implode( ', ', $groups ) : 'None',

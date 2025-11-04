@@ -190,6 +190,9 @@ class RunTask extends GloopControlSubpage {
 
 	private function changeUserEmail( User $user, string $email ): Status {
 		$status = new Status();
+		if ( $user->isTemp() ) {
+			return $status->fatal( 'gloopcontrol-tasks-error-user-temp' );
+		}
 		if ( $user->getEmail() === $email ) {
 			return $status->warning( 'gloopcontrol-tasks-warning-email-already-set', $user->getName() );
 		}
@@ -205,6 +208,9 @@ class RunTask extends GloopControlSubpage {
 
 	private function changeUserPassword( User $user, string $password, bool $invalidate = false ): Status {
 		$status = new Status();
+		if ( $user->isTemp() ) {
+			return $status->fatal( 'gloopcontrol-tasks-error-user-temp' );
+		}
 		if ( !$user->isValidPassword( $password ) ) {
 			return $status->fatal( 'gloopcontrol-tasks-error-password-invalid' );
 		}
@@ -272,6 +278,10 @@ class RunTask extends GloopControlSubpage {
 
 	private function anonymiseUser( User $user ): Status {
 		$status = new Status();
+		if ( $user->isTemp() ) {
+			return $status->fatal( 'gloopcontrol-tasks-error-user-temp' );
+		}
+
 		$dbw = MediaWikiServices::getInstance()->getDBLoadBalancer()->getConnection( DB_PRIMARY );
 
 		/**
