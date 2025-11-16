@@ -296,18 +296,20 @@ class RunTask extends GloopControlSubpage {
 			return $status->fatal( 'gloopcontrol-tasks-error-user-temp' );
 		}
 
-		$dbw = MediaWikiServices::getInstance()->getDBLoadBalancer()->getConnection( DB_PRIMARY );
-
 		/**
 		 * In order to anonymize a user, we do the following steps in order:
 		 * - Remove the user's personal data, such as their email address and real name
-		 * - Remove the ability for the user to login to the account by setting their password to an invalid one
+		 * - Remove the ability for the user to login to the account and invalidate sessions
 		 * - Rename the user to a random username ("Anonymous [guid]")
 		 */
 
-		$status->merge( $this->changeUserEmail( $user, 'fake@email.com' ) );
 		$user->setRealName( '' );
-		$dbw->update( 'user', [ 'user_password' => '' ], [ 'user_id' => $user->getId() ] );
+
+		MediaWikiServices::getInstance()->getAuthManager()->revokeAccessForUser( $user->getName() );
+		$user->invalidateEmail();
+		$user->setToken( User::INVALID_TOKEN );
+		$user->saveSettings();
+		SessionManager::singleton()->preventSessionsForUser( $user->getName() );
 
 		$rename = new RenameuserSQL(
 			$user->getName(),
