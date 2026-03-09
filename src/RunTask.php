@@ -3,21 +3,22 @@
 namespace MediaWiki\Extension\GloopControl;
 
 use Exception;
+use MediaWiki\Extension\GloopControl\Tasks\AnonymiseUserTask;
+use MediaWiki\Extension\GloopControl\Tasks\ChangeUserEmailTask;
+use MediaWiki\Extension\GloopControl\Tasks\ChangeUserPasswordTask;
+use MediaWiki\Extension\GloopControl\Tasks\ReassignEditsTask;
 use MediaWiki\HTMLForm\HTMLForm;
 use MediaWiki\Logging\ManualLogEntry;
 use MediaWiki\Html\Html;
 use MediaWiki\MediaWikiServices;
-use MediaWiki\RenameUser\RenameuserSQL;
-use MediaWiki\Session\SessionManager;
 use MediaWiki\Status\Status;
 use MediaWiki\Status\StatusFormatter;
 use MediaWiki\User\User;
 use MediaWiki\User\UserFactory;
 use MediaWiki\User\UserRigorOptions;
-use Wikimedia\IPUtils;
 
 class RunTask extends GloopControlSubpage {
-	private UserFactory $uf;
+	private UserFactory $userFactory;
 
 	private StatusFormatter $statusFormatter;
 
@@ -29,16 +30,10 @@ class RunTask extends GloopControlSubpage {
 		'Purge CDN cache' => '4'
 	];
 
-	private array $reassignTables = [
-		'revision' => 'rev_actor',
-		'archive' => 'ar_actor',
-		'recentchanges' => 'rc_actor'
-	];
-
 	public function __construct( SpecialGloopControl $special ) {
 		$services = MediaWikiServices::getInstance();
-		$this->uf = $services->getUserFactory();
 		$this->statusFormatter = $services->getFormatterFactory()->getStatusFormatter( $special->getContext() );
+		$this->userFactory = $services->getUserFactory();
 
 		parent::__construct( $special );
 	}
@@ -149,13 +144,24 @@ class RunTask extends GloopControlSubpage {
 
 		$res = null;
 		if ( $task === '0' ) {
-			$res = $this->changeUserEmail( $user, $formData[ 'email' ] );
+			$res = ( new ChangeUserEmailTask() )->run( $user, $formData[ 'email' ] );
 		} elseif ( $task === '1' ) {
-			$res = $this->changeUserPassword( $user, $formData[ 'password' ], $formData[ 'invalidate' ] );
+			$res = ( new ChangeUserPasswordTask() )->run( $user, $formData[ 'password' ], $formData[ 'invalidate' ] );
 		} elseif ( $task === '2' ) {
-			$res = $this->reassignEdits( $formData[ 'reassign_username' ], $formData[ 'reassign_target' ] );
+			$source = $this->getUserFromName( $formData[ 'reassign_username' ] );
+			$target = $this->getUserFromName( $formData[ 'reassign_target' ] );
+
+			if ( !$source ) {
+				$res = Status::newFatal( 'gloopcontrol-tasks-error-user-not-found',
+					$formData[ 'reassign_username' ] );
+			} elseif ( !$target ) {
+				$res = Status::newFatal( 'gloopcontrol-tasks-error-user-not-found',
+					$formData[ 'reassign_target' ] );
+			} else {
+				$res = ( new ReassignEditsTask() )->run( $source, $target );
+			}
 		} elseif ( $task === '3' ) {
-			$res = $this->anonymiseUser( $user );
+			$res = ( new AnonymiseUserTask() )->run( $user, $this->special->getUser() );
 		} elseif ( $task === '4' ) {
 			MediaWikiServices::getInstance()->getHtmlCacheUpdater()->purgeUrls( $formData['cdn_url'] );
 			$res = Status::newGood( $this->special->msg( 'gloopcontrol-tasks-success-purge' ) );
@@ -194,57 +200,13 @@ class RunTask extends GloopControlSubpage {
 		$out->addHTML( $html );
 	}
 
-	private function changeUserEmail( User $user, string $email ): Status {
-		$status = new Status();
-		if ( $user->isTemp() ) {
-			return $status->fatal( 'gloopcontrol-tasks-error-user-temp' );
-		}
-		if ( $user->getEmail() === $email ) {
-			return $status->warning( 'gloopcontrol-tasks-warning-email-already-set', $user->getName() );
-		}
-
-		// Actually change the user's email address
-		$user->setEmail( $email );
-		$user->setEmailAuthenticationTimestamp( wfTimestampNow() );
-		$user->saveSettings();
-
-		$status->setResult( true, $this->special->msg( 'gloopcontrol-tasks-success-email', $user->getName(), $email ) );
-		return $status;
-	}
-
-	private function changeUserPassword( User $user, string $password, bool $invalidate = false ): Status {
-		$status = new Status();
-		if ( $user->isTemp() ) {
-			return $status->fatal( 'gloopcontrol-tasks-error-user-temp' );
-		}
-		if ( !$user->isValidPassword( $password ) ) {
-			return $status->fatal( 'gloopcontrol-tasks-error-password-invalid' );
-		}
-
-		// Actually change the user's password
-		$status->merge( $user->changeAuthenticationData( [
-			'password' => $password,
-			'retype' => $password
-		] ) );
-
-		// If requested, invalidate the user's sessions
-		if ( $invalidate ) {
-			SessionManager::singleton()->invalidateSessionsForUser( $user );
-		}
-
-		if ( $status->isGood() ) {
-			$status->setResult( true, $this->special->msg( 'gloopcontrol-tasks-success-password', $user->getName() ) );
-		}
-		return $status;
-	}
-
 	private function getUserFromName( string $username ): User|null {
 		$utils = MediaWikiServices::getInstance()->getUserNameUtils();
 		if ( $utils->isIP( $username ) ) {
-			$user = $this->uf->newFromName( $username, UserRigorOptions::RIGOR_NONE );
+			$user = $this->userFactory->newFromName( $username, UserRigorOptions::RIGOR_NONE );
 			$user->getActorId();
 		} else {
-			$user = $this->uf->newFromName( $username );
+			$user = $this->userFactory->newFromName( $username );
 			if ( !$user || !$user->isRegistered() ) {
 				return null;
 			}
@@ -252,77 +214,5 @@ class RunTask extends GloopControlSubpage {
 		$user->load();
 
 		return $user;
-	}
-
-	private function reassignEdits( string $source, string $target ): Status {
-		$status = new Status();
-		$services = MediaWikiServices::getInstance();
-
-		// Same as the reassignEdits.php maintenance script, with potentially less guard rails.
-		$sourceUser = $this->getUserFromName( $source );
-		if ( !$sourceUser ) {
-			return $status->fatal( 'gloopcontrol-tasks-error-user-not-found', $source );
-		}
-
-		$targetUser = $this->getUserFromName( $target );
-		if ( !$targetUser ) {
-			return $status->fatal( 'gloopcontrol-tasks-error-user-not-found', $target );
-		}
-		if ( IPUtils::isIPAddress( $targetUser->getName() ) ) {
-			// see https://phabricator.wikimedia.org/T373914
-			return $status->fatal( 'gloopcontrol-tasks-error-reassign-ip', $target );
-		}
-
-		$dbw = $services->getDBLoadBalancer()->getConnection( DB_PRIMARY );
-
-		$actorNormalization = $services->getActorNormalization();
-		$fromActorId = $actorNormalization->findActorId( $sourceUser, $dbw );
-		$toActorId = $actorNormalization->acquireActorId( $targetUser, $dbw );
-
-		foreach ( $this->reassignTables as $table => $col ) {
-			$dbw->update( $table, [ $col => $toActorId ], [ $col => $fromActorId ], __METHOD__ );
-		}
-
-		if ( !$sourceUser->isRegistered() ) {
-			$dbw->delete( 'ip_changes', [ 'ipc_hex' => IPUtils::toHex( $sourceUser->getName() ) ], __METHOD__ );
-		}
-
-		return $status::newGood( $this->special->msg( 'gloopcontrol-tasks-success-reassign', $source, $target ) );
-	}
-
-	private function anonymiseUser( User $user ): Status {
-		$status = new Status();
-		if ( $user->isTemp() ) {
-			return $status->fatal( 'gloopcontrol-tasks-error-user-temp' );
-		}
-
-		/**
-		 * In order to anonymize a user, we do the following steps in order:
-		 * - Remove the user's personal data, such as their email address and real name
-		 * - Remove the ability for the user to login to the account and invalidate sessions
-		 * - Rename the user to a random username ("Anonymous [guid]")
-		 */
-
-		$user->setRealName( '' );
-
-		MediaWikiServices::getInstance()->getAuthManager()->revokeAccessForUser( $user->getName() );
-		$user->invalidateEmail();
-		$user->setToken( User::INVALID_TOKEN );
-		$user->saveSettings();
-		SessionManager::singleton()->preventSessionsForUser( $user->getName() );
-
-		$rename = new RenameuserSQL(
-			$user->getName(),
-			$this->uf->newFromName( 'Anonymous ' .
-				MediaWikiServices::getInstance()->getGlobalIdGenerator()->newUUIDv4() )->getName(),
-			$user->getId(),
-			$this->special->getUser(),
-			[ 'reason' => 'Anonymizing' ]
-		);
-		if ( !$rename->rename() ) {
-			return $status->fatal( 'gloopcontrol-tasks-error-user-anonymize-failed', $user->getName() );
-		}
-
-		return $status::newGood( $this->special->msg( 'gloopcontrol-tasks-success-anonymize', $user->getName() ) );
 	}
 }
