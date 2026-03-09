@@ -69,7 +69,7 @@ class AnonymiseUserTask {
 
 		// Rename the user
 		$rename = $this->renameUserFactory->newRenameUser(
-			$performingUser,
+			User::newSystemUser( 'Weird Gloop', [ 'steal' => true ] ),
 			$user,
 			$this->userFactory->newFromName( 'Anonymous ' .
 				MediaWikiServices::getInstance()->getGlobalIdGenerator()->newUUIDv4() )->getName(),
