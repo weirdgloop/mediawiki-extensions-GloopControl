@@ -3,16 +3,18 @@
 namespace MediaWiki\Extension\GloopControl\Tasks;
 
 use MediaWiki\Auth\AuthManager;
+use MediaWiki\Config\Config;
+use MediaWiki\JobQueue\JobQueueGroupFactory;
+use MediaWiki\JobQueue\JobSpecification;
+use MediaWiki\MainConfigNames;
 use MediaWiki\MediaWikiServices;
 use MediaWiki\RenameUser\RenameUserFactory;
 use MediaWiki\Session\SessionManager;
 use MediaWiki\Status\Status;
 use MediaWiki\User\User;
 use MediaWiki\User\UserFactory;
+use MediaWiki\WikiMap\WikiMap;
 use StatusValue;
-use Wikimedia\Rdbms\DBConnRef;
-use Wikimedia\Rdbms\DBQueryError;
-use Wikimedia\Rdbms\IDatabase;
 
 /**
  * Task to anonymize a user.
@@ -35,25 +37,28 @@ class AnonymiseUserTask {
 	/** @var RenameUserFactory */
 	private RenameUserFactory $renameUserFactory;
 
-	/** @var DBConnRef */
-	private DBConnRef $dbw;
+	/** @var Config */
+	private Config $config;
+
+	/** @var JobQueueGroupFactory */
+	private JobQueueGroupFactory $jobQueueGroupFactory;
 
 	public function __construct() {
 		$services = MediaWikiServices::getInstance();
 		$this->userFactory = $services->getUserFactory();
 		$this->authManager = $services->getAuthManager();
 		$this->sessionManager = $services->getSessionManager();
-		$this->dbw = $services->getDBLoadBalancer()->getMaintenanceConnectionRef( DB_PRIMARY );
 		$this->renameUserFactory = $services->getRenameUserFactory();
+		$this->config = $services->getMainConfig();
+		$this->jobQueueGroupFactory = $services->getJobQueueGroupFactory();
 	}
 
 	/**
 	 * Run the anonymise user task.
 	 * @param User $user user to anonymise
-	 * @param User $performingUser user performing the action
 	 * @return Status|StatusValue
 	 */
-	public function run( User $user, User $performingUser ) {
+	public function run( User $user ) {
 		$status = new Status();
 		if ( $user->isTemp() ) {
 			return $status->fatal( 'gloopcontrol-tasks-error-user-temp' );
@@ -67,65 +72,39 @@ class AnonymiseUserTask {
 		$user->saveSettings();
 		$this->sessionManager->preventSessionsForUser( $user->getName() );
 
+		$oldName = $user->getName();
+		$newName = $this->userFactory->newFromName(
+			'Anonymous ' . MediaWikiServices::getInstance()->getGlobalIdGenerator()->newUUIDv4() )->getName();
+
 		// Rename the user
 		$rename = $this->renameUserFactory->newRenameUser(
 			User::newSystemUser( 'Weird Gloop', [ 'steal' => true ] ),
 			$user,
-			$this->userFactory->newFromName( 'Anonymous ' .
-				MediaWikiServices::getInstance()->getGlobalIdGenerator()->newUUIDv4() )->getName(),
+			$newName,
 			'Anonymizing'
 		);
 		if ( !$rename->renameUnsafe() ) {
 			return $status->fatal( 'gloopcontrol-tasks-error-user-anonymize-failed', $user->getName() );
 		}
 
-		// Delete any potential PII in the database
-		$actorId = $user->getActorId();
-		$rowsToDelete = [
-			'logging' => [
-				// Delete any logs related to the rename
-				[ 'log_action' => 'renameuser', 'log_title' => $user->getTitleKey(), 'log_type' => 'renameuser' ]
-			],
-			'recentchanges' => [
-				// Delete any logs related to the rename
-				[ 'rc_log_action' => 'renameuser', 'rc_title' => $user->getTitleKey(), 'rc_log_type' => 'renameuser' ]
-			],
-			// CheckUser PII
-			'cu_changes' => [
-				[ 'cuc_actor' => $actorId ]
-			],
-			'cu_log' => [
-				[ 'cul_actor' => $actorId ],
-				[ 'cul_target_id' => $actorId, 'cul_type' => [ 'useredits', 'userips' ] ]
-			]
-		];
-
-		$dbw = $this->dbw;
-		foreach ( $rowsToDelete as $key => $value ) {
-			if ( !$dbw->tableExists( $key, __METHOD__ ) ) {
-				continue;
+		if ( $this->userFactory->isUserTableShared() ) {
+			foreach ( $this->config->get( MainConfigNames::LocalDatabases ) as $database ) {
+				$status->merge( $this->queueJob( $database, $oldName, $newName ) );
 			}
-
-			foreach ( $value as $where ) {
-				try {
-					$method = __METHOD__;
-					$dbw->doAtomicSection( $method, static function () use ( $dbw, $key, $where, $method ) {
-						$dbw->newDeleteQueryBuilder()
-							->deleteFrom( $key )
-							->where( $where )
-							->caller( $method )
-							->execute();
-					}, IDatabase::ATOMIC_CANCELABLE );
-				} catch ( DBQueryError $e ) {
-					$status->warning(
-						'gloopcontrol-tasks-error-user-anonymize-failed-dbdelete',
-						$user->getName(),
-						$e->getMessage()
-					);
-				}
-			}
+		} else {
+			$status->merge( $this->queueJob( WikiMap::getCurrentWikiDbDomain()->getId(), $oldName, $newName ) );
 		}
 
 		return $status::newGood( wfMessage( 'gloopcontrol-tasks-success-anonymize', $user->getName() ) );
+	}
+
+	private function queueJob( string $database, string $oldName, string $newName ) {
+		$params = [
+			'oldname' => $oldName,
+			'newname' => $newName
+		];
+		$job = new JobSpecification( 'AnonymiseUserJob', $params, [], null );
+		$this->jobQueueGroupFactory->makeJobQueueGroup( $database )->push( $job );
+		return Status::newGood();
 	}
 }

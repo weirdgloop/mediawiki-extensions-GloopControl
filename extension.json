@@ -91,7 +91,14 @@
 		"BeforeCreateEchoEvent": "main"
 	},
 	"JobClasses": {
-		"NotifyAllUsersJob": "MediaWiki\\Extension\\GloopControl\\NotifyAllUsersJob"
+		"NotifyAllUsersJob": "MediaWiki\\Extension\\GloopControl\\NotifyAllUsersJob",
+		"AnonymiseUserJob": {
+			"class": "MediaWiki\\Extension\\GloopControl\\Jobs\\AnonymiseUserJob",
+			"services": [
+				"UserFactory",
+				"DBLoadBalancerFactory"
+			]
+		}
 	},
 	"HookHandlers": {
 		"main": {
