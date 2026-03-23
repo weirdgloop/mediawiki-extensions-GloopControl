@@ -2,8 +2,8 @@
 
 namespace MediaWiki\Extension\GloopControl;
 
+use MediaWiki\Extension\OATHAuth\OATHUserRepository;
 use MediaWiki\Registration\ExtensionRegistry;
-use MediaWiki\Extension\OATHAuth\IModule;
 use MediaWiki\Html\TemplateParser;
 use MediaWiki\MediaWikiServices;
 use MediaWiki\SpecialPage\SpecialPage;
@@ -44,10 +44,10 @@ class SpecialGloopControl extends SpecialPage {
 					'The OATHAuth extension is not enabled, but $wgGloopControlRequire2FA is set to true.' );
 			}
 
+			/** @var OATHUserRepository $repo */
 			$repo = MediaWikiServices::getInstance()->getService( 'OATHUserRepository' );
 			$oathUser = $repo->findByUser( $this->getUser() );
-			$module = $oathUser->getModule();
-			if ( !( $module instanceof IModule ) || $module->isEnabled( $oathUser ) === false ) {
+			if ( !$oathUser->isTwoFactorAuthEnabled() ) {
 				// User does not have 2FA enabled, do not allow them to access this page.
 				throw new PermissionsError( null, [ 'gloopcontrol-error-2fa' ] );
 			}
