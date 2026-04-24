@@ -81,7 +81,9 @@ class AnonymiseUserTask {
 			User::newSystemUser( 'Weird Gloop', [ 'steal' => true ] ),
 			$user,
 			$newName,
-			'Anonymizing'
+			'Anonymizing',
+			// Don't move the pages, AnonymiseUserJob will delete them instead later
+			[ 'movePages' => false ]
 		);
 		if ( !$rename->renameUnsafe() ) {
 			return $status->fatal( 'gloopcontrol-tasks-error-user-anonymize-failed', $user->getName() );

@@ -3,6 +3,8 @@
 namespace MediaWiki\Extension\GloopControl\Jobs;
 
 use Job;
+use MediaWiki\Page\DeletePageFactory;
+use MediaWiki\Page\WikiPageFactory;
 use MediaWiki\Title\Title;
 use MediaWiki\User\UserFactory;
 use Wikimedia\Rdbms\DBQueryError;
@@ -16,21 +18,27 @@ use Wikimedia\Rdbms\LBFactory;
  * shouldn't be an issue - the job will just silently move on.
  */
 class AnonymiseUserJob extends Job {
-	/** @var UserFactory */
 	private UserFactory $userFactory;
 
-	/** @var LBFactory */
 	private LBFactory $lbFactory;
+
+	private WikiPageFactory $wikiPageFactory;
+
+	private DeletePageFactory $deletePageFactory;
 
 	public function __construct(
 		Title $title,
 		array $params,
 		UserFactory $userFactory,
-		LBFactory $lbFactory
+		LBFactory $lbFactory,
+		WikiPageFactory $wikiPageFactory,
+		DeletePageFactory $deletePageFactory
 	) {
 		parent::__construct( 'AnonymiseUserJob', $params );
 		$this->userFactory = $userFactory;
 		$this->lbFactory = $lbFactory;
+		$this->wikiPageFactory = $wikiPageFactory;
+		$this->deletePageFactory = $deletePageFactory;
 	}
 
 	public function run() {
@@ -59,6 +67,31 @@ class AnonymiseUserJob extends Job {
 		];
 
 		$dbw = $this->lbFactory->getMainLB()->getMaintenanceConnectionRef( DB_PRIMARY );
+
+		// Delete user pages - similar to miraheze/RemovePII
+		$userPage = $oldUser->getUserPage();
+		$rows = $dbw->newSelectQueryBuilder()
+			->table( 'page' )
+			->fields( [ 'page_id', 'page_namespace', 'page_title' ] )
+			->where( [
+				'page_namespace IN (' . implode( ',', [ NS_USER, NS_USER_TALK ] ) . ')',
+				'(page_title ' . $dbw->buildLike( $userPage->getDBkey() . '/', $dbw->anyString() ) .
+				' OR page_title = ' . $dbw->addQuotes( $userPage->getDBkey() ) . ')',
+			] )
+			->caller( __METHOD__ )
+			->fetchResultSet();
+
+		foreach ( $rows as $row ) {
+			$deletePage = $this->deletePageFactory->newDeletePage(
+				$this->wikiPageFactory->newFromID( $row->page_id ),
+				$user
+			);
+			$status = $deletePage->setSuppress( true )->forceImmediate( true )->deleteUnsafe( '' );
+			if ( !$status->isOK() ) {
+				$this->setLastError( "Could not delete " . $row->page_title . " in namespace " . $row->page_namespace );
+			}
+		}
+
 		foreach ( $rowsToDelete as $key => $value ) {
 			if ( !$dbw->tableExists( $key, __METHOD__ ) ) {
 				continue;

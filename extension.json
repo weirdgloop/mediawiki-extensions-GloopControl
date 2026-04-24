@@ -96,7 +96,9 @@
 			"class": "MediaWiki\\Extension\\GloopControl\\Jobs\\AnonymiseUserJob",
 			"services": [
 				"UserFactory",
-				"DBLoadBalancerFactory"
+				"DBLoadBalancerFactory",
+				"WikiPageFactory",
+				"DeletePageFactory"
 			]
 		}
 	},
