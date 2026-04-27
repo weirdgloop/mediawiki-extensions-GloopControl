@@ -6,6 +6,7 @@ use Job;
 use MediaWiki\Page\DeletePageFactory;
 use MediaWiki\Page\WikiPageFactory;
 use MediaWiki\Title\Title;
+use MediaWiki\User\User;
 use MediaWiki\User\UserFactory;
 use Wikimedia\Rdbms\DBQueryError;
 use Wikimedia\Rdbms\IDatabase;
@@ -84,7 +85,7 @@ class AnonymiseUserJob extends Job {
 		foreach ( $rows as $row ) {
 			$deletePage = $this->deletePageFactory->newDeletePage(
 				$this->wikiPageFactory->newFromID( $row->page_id ),
-				$user
+				User::newSystemUser( 'Weird Gloop', [ 'steal' => true ] )
 			);
 			$status = $deletePage->setSuppress( true )->forceImmediate( true )->deleteUnsafe( '' );
 			if ( !$status->isOK() ) {
