@@ -10,6 +10,7 @@ use MediaWiki\User\User;
 use MediaWiki\User\UserFactory;
 use Wikimedia\Rdbms\DBQueryError;
 use Wikimedia\Rdbms\IDatabase;
+use Wikimedia\Rdbms\IDBAccessObject;
 use Wikimedia\Rdbms\LBFactory;
 
 /**
@@ -44,7 +45,10 @@ class AnonymiseUserJob extends Job {
 
 	public function run() {
 		$oldUser = $this->userFactory->newFromName( $this->params['oldname'] );
+		$oldUser->load( IDBAccessObject::READ_LATEST );
+
 		$user = $this->userFactory->newFromName( $this->params['newname'] );
+		$user->load( IDBAccessObject::READ_LATEST );
 
 		// Delete any potential PII in the database
 		$actorId = $user->getActorId();
