@@ -28,6 +28,8 @@ use StatusValue;
  * - Rename the user to a random username ("Anonymous [guid]")
  */
 class AnonymiseUserTask {
+	public const RENAME_USER_REASON = 'Anonymizing';
+
 	/** @var UserFactory */
 	private UserFactory $userFactory;
 
@@ -85,16 +87,17 @@ class AnonymiseUserTask {
 		$newName = $this->userFactory->newFromName(
 			'Anonymous ' . MediaWikiServices::getInstance()->getGlobalIdGenerator()->newUUIDv4() )->getName();
 
-		// Rename the user
+		// Rename the user locally, without scheduling derived jobs on other wikis in the family (that is going to be
+		// handled in our AnonymiseUserJob)
 		$rename = $this->renameUserFactory->newRenameUser(
 			User::newSystemUser( 'Weird Gloop', [ 'steal' => true ] ),
 			$user,
 			$newName,
-			'Anonymizing',
+			self::RENAME_USER_REASON,
 			// Don't move the pages, AnonymiseUserJob will delete them instead later
 			[ 'movePages' => false ]
 		);
-		if ( !$rename->renameUnsafe() ) {
+		if ( !$rename->renameLocal() ) {
 			return $status->fatal( 'gloopcontrol-tasks-error-user-anonymize-failed', $user->getName() );
 		}
 
@@ -136,7 +139,8 @@ class AnonymiseUserTask {
 	private function queueJob( string $database, string $oldName, string $newName ) {
 		$params = [
 			'oldname' => $oldName,
-			'newname' => $newName
+			'newname' => $newName,
+			'needsRenameUser' => $database !== WikiMap::getCurrentWikiDbDomain()->getId(),
 		];
 		$job = new JobSpecification( 'AnonymiseUserJob', $params, [], null );
 		$this->jobQueueGroupFactory->makeJobQueueGroup( $database )->push( $job );

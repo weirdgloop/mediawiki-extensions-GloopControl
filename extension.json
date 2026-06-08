@@ -98,7 +98,8 @@
 				"UserFactory",
 				"DBLoadBalancerFactory",
 				"WikiPageFactory",
-				"DeletePageFactory"
+				"DeletePageFactory",
+				"RenameUserFactory"
 			]
 		}
 	},

@@ -3,8 +3,10 @@
 namespace MediaWiki\Extension\GloopControl\Jobs;
 
 use Job;
+use MediaWiki\Extension\GloopControl\Tasks\AnonymiseUserTask;
 use MediaWiki\Page\DeletePageFactory;
 use MediaWiki\Page\WikiPageFactory;
+use MediaWiki\RenameUser\RenameUserFactory;
 use MediaWiki\Title\Title;
 use MediaWiki\User\User;
 use MediaWiki\User\UserFactory;
@@ -34,7 +36,8 @@ class AnonymiseUserJob extends Job {
 		UserFactory $userFactory,
 		LBFactory $lbFactory,
 		WikiPageFactory $wikiPageFactory,
-		DeletePageFactory $deletePageFactory
+		DeletePageFactory $deletePageFactory,
+		private readonly RenameUserFactory $renameUserFactory
 	) {
 		parent::__construct( 'AnonymiseUserJob', $params );
 		$this->userFactory = $userFactory;
@@ -44,11 +47,40 @@ class AnonymiseUserJob extends Job {
 	}
 
 	public function run() {
+		$oldName = $this->params['oldname'];
+		$newName = $this->params['newname'];
+		$needsRenameUser = $this->params['needsRenameUser'] ?? false;
+
 		$oldUser = $this->userFactory->newFromName( $this->params['oldname'] );
 		$oldUser->load( IDBAccessObject::READ_LATEST );
 
 		$user = $this->userFactory->newFromName( $this->params['newname'] );
 		$user->load( IDBAccessObject::READ_LATEST );
+
+		$systemUser = User::newSystemUser( 'Weird Gloop', [ 'steal' => true ] );
+
+		// Finish the user rename operation. Normally, this would be done via RenameUserDerivedJob, but we'd be racing
+		// with it. (WG-430)
+		if ( $needsRenameUser && $this->userFactory->isUserTableShared() ) {
+			// Clear local cache for the user
+			$user->invalidateCache();
+			// Run the local rename work
+			$rename = $this->renameUserFactory->newDerivedRenameUser(
+				$systemUser,
+				$user->getId(),
+				$this->params['oldname'],
+				$this->params['newname'],
+				AnonymiseUserTask::RENAME_USER_REASON,
+				[ 'movePages' => false ]
+			);
+			$status = $rename->renameLocal();
+			if ( !$status->isGood() ) {
+				$this->setLastError(
+					"Cannot finish derived local user rename from $oldName to $newName: $status"
+				);
+				return false;
+			}
+		}
 
 		// Delete any potential PII in the database
 		$actorId = $user->getActorId();
@@ -89,7 +121,7 @@ class AnonymiseUserJob extends Job {
 		foreach ( $rows as $row ) {
 			$deletePage = $this->deletePageFactory->newDeletePage(
 				$this->wikiPageFactory->newFromID( $row->page_id ),
-				User::newSystemUser( 'Weird Gloop', [ 'steal' => true ] )
+				$systemUser
 			);
 			$status = $deletePage->setSuppress( true )->forceImmediate( true )->deleteUnsafe( '' );
 			if ( !$status->isOK() ) {
