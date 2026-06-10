@@ -49,7 +49,7 @@ class Notifications extends GloopControlSubpage {
 				'label-message' => 'gloopcontrol-notifications-send-target-type',
 				'options' => [
 					'Send to specific user(s)' => 'users',
-					'Send to all users on this wiki' => 'all_users',
+					// 'Send to all users on this wiki' => 'all_users',
 					// 'Send to all users on entire network (all wikis)' => 'all_network'
 				]
 			],
