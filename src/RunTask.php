@@ -136,7 +136,7 @@ class RunTask extends GloopControlSubpage {
 			->show();
 	}
 
-	public function onFormSubmit( array $formData ): void {
+	public function onFormSubmit( array $formData ): bool {
 		$out = $this->special->getOutput();
 		$task = $formData[ 'task' ];
 		$user = null;
@@ -151,12 +151,12 @@ class RunTask extends GloopControlSubpage {
 			if ( !$user ) {
 				$out->addHTML( Html::errorBox(
 					$out->msg( 'gloopcontrol-tasks-error-user-not-found', $formData[ 'username' ] ) ) );
-				return;
+				return false;
 			}
 			if ( $user->getId() === $this->special->getUser()->getId() ) {
 				// Sanity check: if this user is trying to perform an action on themselves, don't let them.
 				$out->addHTML( Html::errorBox( $out->msg( 'gloopcontrol-tasks-error-user-self' ) ) );
-				return;
+				return false;
 			}
 		}
 
@@ -219,9 +219,9 @@ class RunTask extends GloopControlSubpage {
 			$html = Html::errorBox( $this->statusFormatter->getMessage( $res ) );
 		}
 
-
 		// Finally, show the result HTML
 		$out->addHTML( $html );
+		return $res->isGood();
 	}
 
 	private function getUserFromName( string $username ): User|null {
