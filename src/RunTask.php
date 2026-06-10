@@ -3,6 +3,7 @@
 namespace MediaWiki\Extension\GloopControl;
 
 use Exception;
+use MediaWiki\Extension\GloopControl\Enums\AnonymisationReason;
 use MediaWiki\Extension\GloopControl\Tasks\AnonymiseUserTask;
 use MediaWiki\Extension\GloopControl\Tasks\ChangeUserEmailTask;
 use MediaWiki\Extension\GloopControl\Tasks\ChangeUserPasswordTask;
@@ -99,6 +100,23 @@ class RunTask extends GloopControlSubpage {
 				'label-message' => 'gloopcontrol-tasks-purge-cache',
 				'hide-if' => [ '!==', 'task', '4' ]
 			],
+			'anonymise_email' => [
+				'type' => 'check',
+				'label-message' => 'gloopcontrol-tasks-anonymize-send-email',
+				'hide-if' => [ '!==', 'task', '3' ],
+				'default' => true
+			],
+			'anonymise_email_reason' => [
+				'type' => 'select',
+				'required' => true,
+				'label-message' => 'gloopcontrol-tasks-anonymize-send-email-reason',
+				'hide-if' => [ 'OR', [ '!==', 'task', '3' ], [ '!==', 'anonymise_email', '1' ] ],
+				'options' => [
+					'Requested by user' => AnonymisationReason::REQUESTED->value,
+					'Terms of Service (generic)' => AnonymisationReason::TOS_GENERIC->value,
+					'Terms of Service (underage user)' => AnonymisationReason::TOS_UNDERAGE->value,
+				]
+			],
 			'comment' => [
 				'type' => 'text',
 				'label-message' => 'gloopcontrol-tasks-comment',
@@ -161,7 +179,12 @@ class RunTask extends GloopControlSubpage {
 				$res = ( new ReassignEditsTask() )->run( $source, $target );
 			}
 		} elseif ( $task === '3' ) {
-			$res = ( new AnonymiseUserTask() )->run( $user, $this->special->getUser() );
+			$reason = $formData[ 'anonymise_email_reason' ];
+			$res = ( new AnonymiseUserTask() )
+				->run( $user, $formData[ 'anonymise_email' ],
+					$reason !== null ?
+					AnonymisationReason::tryFrom( $formData[ 'anonymise_email_reason' ] ) : null
+				);
 		} elseif ( $task === '4' ) {
 			MediaWikiServices::getInstance()->getHtmlCacheUpdater()->purgeUrls( $formData['cdn_url'] );
 			$res = Status::newGood( $this->special->msg( 'gloopcontrol-tasks-success-purge' ) );
@@ -195,6 +218,7 @@ class RunTask extends GloopControlSubpage {
 		} else {
 			$html = Html::errorBox( $this->statusFormatter->getMessage( $res ) );
 		}
+
 
 		// Finally, show the result HTML
 		$out->addHTML( $html );

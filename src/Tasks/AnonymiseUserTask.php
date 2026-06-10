@@ -4,8 +4,11 @@ namespace MediaWiki\Extension\GloopControl\Tasks;
 
 use MediaWiki\Auth\AuthManager;
 use MediaWiki\Config\Config;
+use MediaWiki\Extension\GloopControl\Enums\AnonymisationReason;
 use MediaWiki\JobQueue\JobQueueGroupFactory;
 use MediaWiki\JobQueue\JobSpecification;
+use MediaWiki\Mail\IEmailer;
+use MediaWiki\Mail\MailAddress;
 use MediaWiki\MainConfigNames;
 use MediaWiki\MediaWikiServices;
 use MediaWiki\RenameUser\RenameUserFactory;
@@ -43,6 +46,9 @@ class AnonymiseUserTask {
 	/** @var JobQueueGroupFactory */
 	private JobQueueGroupFactory $jobQueueGroupFactory;
 
+	/** @var IEmailer */
+	private IEmailer $emailer;
+
 	public function __construct() {
 		$services = MediaWikiServices::getInstance();
 		$this->userFactory = $services->getUserFactory();
@@ -51,6 +57,7 @@ class AnonymiseUserTask {
 		$this->renameUserFactory = $services->getRenameUserFactory();
 		$this->config = $services->getMainConfig();
 		$this->jobQueueGroupFactory = $services->getJobQueueGroupFactory();
+		$this->emailer = $services->getEmailer();
 	}
 
 	/**
@@ -58,11 +65,13 @@ class AnonymiseUserTask {
 	 * @param User $user user to anonymise
 	 * @return Status|StatusValue
 	 */
-	public function run( User $user ) {
+	public function run( User $user, bool $sendEmail, ?AnonymisationReason $reason ) {
 		$status = new Status();
 		if ( $user->isTemp() ) {
 			return $status->fatal( 'gloopcontrol-tasks-error-user-temp' );
 		}
+
+		$email = $user->isEmailConfirmed() ? $user->getEmail() : null;
 
 		// Change various settings for the user, and invalidate their sessions
 		$user->setRealName( '' );
@@ -95,6 +104,30 @@ class AnonymiseUserTask {
 			}
 		} else {
 			$status->merge( $this->queueJob( WikiMap::getCurrentWikiDbDomain()->getId(), $oldName, $newName ) );
+		}
+
+		if ( $sendEmail && $email && !is_null( $reason ) ) {
+			$recipient = new MailAddress( $email, $oldName );
+			$sender = new MailAddress( $this->config->get( MainConfigNames::PasswordSender ),
+				wfMessage( 'emailsender' )->inContentLanguage()->text()
+			);
+			$reasonText = (match ( $reason ) {
+				AnonymisationReason::REQUESTED =>
+					wfMessage( 'gloopcontrol-tasks-anonymize-email-body-reason-requested' ),
+				AnonymisationReason::TOS_GENERIC =>
+					wfMessage( 'gloopcontrol-tasks-anonymize-email-body-reason-tos-generic' ),
+				AnonymisationReason::TOS_UNDERAGE =>
+					wfMessage( 'gloopcontrol-tasks-anonymize-email-body-reason-tos-underage' ),
+			})->inContentLanguage()->plaintextParams( $this->config->get( MainConfigNames::Sitename ) )->plain();
+
+			$this->emailer->send(
+				$recipient,
+				$sender,
+				wfMessage( 'gloopcontrol-tasks-anonymize-email-subject' )->inContentLanguage()
+					->plaintextParams( $this->config->get( MainConfigNames::Sitename ) )->plain(),
+				wfMessage( 'gloopcontrol-tasks-anonymize-email-body' )->inContentLanguage()
+					->plaintextParams( $oldName, $reasonText )->plain()
+			);
 		}
 
 		return $status::newGood( wfMessage( 'gloopcontrol-tasks-success-anonymize', $user->getName() ) );
