@@ -27,32 +27,6 @@
 	"config": {
 		"Require2FA": {
 			"value": true
-		},
-		"RestrictedConfig": {
-			"value": [
-				"wgSecretKey",
-				"wgSessionSecret",
-				"wgShellboxSecretKey",
-				"wgGloopTweaksCFToken",
-				"wgDBadminuser",
-				"wgDBadminpassword",
-				"wgDBuser",
-				"wgDBpassword",
-				"wgDBserver",
-				"wgReCaptchaSecretKey",
-				"wgReCaptchaSiteKey",
-				"wglSMTPpassword",
-				"wgDiscordWebhookURLs",
-				"wgOAuth2PrivateKey",
-				"wgOAuth2PublicKey",
-				"wgMUASecret",
-				"wgDiscordWebhookURLs",
-				"wgHKDFSecret",
-				"wgUpgradeKey",
-				"wgUser",
-				"wgOut",
-				"wgSMTP"
-			]
 		}
 	},
 	"ResourceFileModulePaths": {

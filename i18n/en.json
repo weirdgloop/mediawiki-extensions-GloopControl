@@ -11,7 +11,6 @@
 	"gloopcontrol-log-header": "This is a log of actions taken by Weird Gloop staff members using [[Special:GloopControl]] on this wiki.",
 	"logentry-gloopcontrol-task": "$1 ran task \"$4\" on target $3",
 	"logentry-gloopcontrol-notif": "$1 sent a notification with header \"$4\" and content \"$5\" ($6)",
-	"gloopcontrol-config-intro": "This page outputs a serialized JSON list of global variables on this wiki that begin with <code>$wg</code> or <code>$wmg</code>. Some sensitive configuration variables are hidden from this list.",
 	"gloopcontrol-user-type": "Type",
 	"gloopcontrol-user-username": "User",
 	"gloopcontrol-user-id": "ID",

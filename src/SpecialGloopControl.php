@@ -27,7 +27,6 @@ class SpecialGloopControl extends SpecialPage {
 			'Get user info' => Title::newFromText( 'GloopControl/user', NS_SPECIAL )->getLinkURL(),
 			'Notifications' => Title::newFromText( 'GloopControl/notifications', NS_SPECIAL )->getLinkURL(),
 			'Run task' => Title::newFromText( 'GloopControl/task', NS_SPECIAL )->getLinkURL(),
-			'Config' => Title::newFromText( 'GloopControl/config', NS_SPECIAL )->getLinkURL(),
 		];
 	}
 
@@ -63,9 +62,7 @@ class SpecialGloopControl extends SpecialPage {
 		}
 		$out->addSubtitle( implode( $this->msg( 'pipe-separator' )->text(), $links ) );
 
-		if ( $subPage === 'config' ) {
-			new ViewConfig( $this );
-		} elseif ( $subPage === 'user' ) {
+		if ( $subPage === 'user' ) {
 			new SearchUser( $this );
 		} elseif ( $subPage === 'task' ) {
 			new RunTask( $this );
@@ -91,7 +88,6 @@ class SpecialGloopControl extends SpecialPage {
 			'search_user_url' => $this->links['Get user info'],
 			'task_url' => $this->links['Run task'],
 			'notifications_url' => $this->links['Notifications'],
-			'site_config_url' => $this->links['Config'],
 		];
 	}
 }
