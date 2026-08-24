@@ -2,11 +2,11 @@
 
 namespace MediaWiki\Extension\GloopControl;
 
+use MediaWiki\Extension\OATHAuth\OATHUserRepository;
 use MediaWiki\Registration\ExtensionRegistry;
 use MediaWiki\Json\FormatJson;
 use MediaWiki\HTMLForm\HTMLForm;
 use MediaWiki\Language\Language;
-use MediaWiki\Extension\OATHAuth\IModule;
 use MediaWiki\Html\Html;
 use MediaWiki\MediaWikiServices;
 use MediaWiki\Title\Title;
@@ -190,13 +190,9 @@ class SearchUser extends GloopControlSubpage {
 
 		if ( $this->er->isLoaded( 'OATHAuth' ) ) {
 			$repo = MediaWikiServices::getInstance()->getService( 'OATHUserRepository' );
+			/** @var OATHUserRepository $repo */
 			$oathUser = $repo->findByUser( $user );
-			$module = $oathUser->getModule();
-			if ( !( $module instanceof IModule ) || $module->isEnabled( $oathUser ) === false ) {
-				$templateData['2fa'] = 'No';
-			} else {
-				$templateData['2fa'] = 'Yes';
-			}
+			$templateData['2fa'] = $oathUser->isTwoFactorAuthEnabled() ? 'Yes' : 'No';
 		}
 
 		// Do some final database lookups for anything else
