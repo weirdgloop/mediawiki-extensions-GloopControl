@@ -18,7 +18,11 @@ class SpecialGloopControl extends SpecialPage {
 	private array $links;
 
 	public function __construct() {
-		parent::__construct( 'GloopControl', 'gloopcontrol' );
+		if ( version_compare( MW_VERSION, '1.46', '>=' ) ) {
+			parent::__construct( 'GloopControl' );
+		} else {
+			parent::__construct( 'GloopControl', 'gloopcontrol' );
+		}
 		$this->templateParser = new TemplateParser( __DIR__ . '/templates' );
 
 		// Create our relevant page links
@@ -89,5 +93,10 @@ class SpecialGloopControl extends SpecialPage {
 			'task_url' => $this->links['Run task'],
 			'notifications_url' => $this->links['Notifications'],
 		];
+	}
+
+	/** @inheritDoc */
+	public function getRestriction(): string {
+		return 'gloopcontrol';
 	}
 }
