@@ -189,7 +189,12 @@ class SearchUser extends GloopControlSubpage {
 		}
 
 		if ( $this->er->isLoaded( 'OATHAuth' ) ) {
-			$repo = MediaWikiServices::getInstance()->getService( 'OATHUserRepository' );
+			if ( version_compare( MW_VERSION, '1.46', '>=' ) ) {
+				// 1.46+
+				$repo = MediaWikiServices::getInstance()->getService( 'OATHAuth.UserRepository' );
+			} else {
+				$repo = MediaWikiServices::getInstance()->getService( 'OATHUserRepository' );
+			}
 			/** @var OATHUserRepository $repo */
 			$oathUser = $repo->findByUser( $user );
 			$templateData['2fa'] = $oathUser->isTwoFactorAuthEnabled() ? 'Yes' : 'No';

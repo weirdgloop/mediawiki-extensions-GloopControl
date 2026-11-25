@@ -48,7 +48,12 @@ class SpecialGloopControl extends SpecialPage {
 			}
 
 			/** @var OATHUserRepository $repo */
-			$repo = MediaWikiServices::getInstance()->getService( 'OATHUserRepository' );
+			if ( version_compare( MW_VERSION, '1.46', '>=' ) ) {
+				// 1.46+
+				$repo = MediaWikiServices::getInstance()->getService( 'OATHAuth.UserRepository' );
+			} else {
+				$repo = MediaWikiServices::getInstance()->getService( 'OATHUserRepository' );
+			}
 			$oathUser = $repo->findByUser( $this->getUser() );
 			if ( !$oathUser->isTwoFactorAuthEnabled() ) {
 				// User does not have 2FA enabled, do not allow them to access this page.
